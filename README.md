@@ -51,6 +51,7 @@ Invariant-Helix/
 ├── SKILL.md              controller: G0–G9 gates + capability routing
 ├── INSTALL.md            tiered install commands (core needs only Python)
 ├── QUICKSTART.md         copy-paste end-to-end run
+├── HANDOFF.md            full walkthrough for someone new to auditing
 ├── references/           the methodology, grouped:
 │   ├── method/           gates, safety, coverage, evidence, graph, reporting, x-ray,
 │   │                     money-map (model the value before hunting the bugs)
@@ -68,14 +69,15 @@ Invariant-Helix/
 │                         converge, cvss, chain, kb, capabilities, normalizers)
 ├── schemas/              JSON contracts the validators enforce
 ├── knowledge/            report templates + gitignored fetched corpus cache
-├── evals/                synthetic fixtures (web, evm, solana, kb)
+├── evals/                synthetic fixtures (web, evm, solana, kb, recon)
 └── tests/                adversarial regression suite
 ```
 
 ## Quick start
 
 Python 3.10+. `pip install -e .` exposes the `ih-*` commands. Full walk-through in
-[QUICKSTART.md](QUICKSTART.md); install tiers in [INSTALL.md](INSTALL.md).
+[QUICKSTART.md](QUICKSTART.md); install tiers in [INSTALL.md](INSTALL.md). New to security
+auditing, or taking this project over? Start with **[HANDOFF.md](HANDOFF.md)**.
 
 ```bash
 pip install -e .
