@@ -1,0 +1,2 @@
+Synthetic observation: user_b requested the existing user_a profile object through the profile API.
+The fixture response contained the synthetic user_a profile marker. No real user data exists.

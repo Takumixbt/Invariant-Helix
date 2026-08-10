@@ -1,0 +1,11 @@
+[
+  {
+    "cve_id": "CVE-SYNTHETIC-0001",
+    "products": ["synthetic-service"],
+    "aliases": ["synthetic_service"],
+    "affected_versions": ">=1.0.0,<1.3.0",
+    "affected_feature": "synthetic profile parser",
+    "references": ["synthetic-fixture"],
+    "known_false_positives": ["feature disabled in fixture configuration"]
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant-helix.dev/schemas/case-manifest.schema.json",
+  "title": "Invariant Helix case manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id", "operator", "authorization_reference", "authorization_expires_at",
+    "snapshot_id", "target_kind", "targets", "rules_of_engagement",
+    "allowed_capabilities", "redaction_policy"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "operator": {"type": "string", "minLength": 1},
+    "authorization_reference": {"type": "string", "minLength": 1},
+    "authorization_expires_at": {"type": "string", "format": "date-time"},
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "target_kind": {"enum": ["web", "chain", "combined", "infrastructure"]},
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/target"}
+    },
+    "rules_of_engagement": {"$ref": "#/$defs/rules"},
+    "allowed_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "surface_inventory", "http_crawl", "browser_workflow", "proxy_observation",
+          "request_replay", "input_mutation", "synchronized_requests", "oob_observation",
+          "source_analysis", "chain_simulation", "execution_trace", "property_fuzzing",
+          "evidence_manifest"
+        ]
+      }
+    },
+    "redaction_policy": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value", "in_scope", "environment"],
+      "properties": {
+        "type": {"enum": ["web-origin", "repository", "contract", "program", "rpc"]},
+        "value": {"type": "string", "minLength": 1},
+        "in_scope": {"type": "boolean"},
+        "environment": {"enum": ["local", "fork", "testnet", "production-program"]},
+        "chain": {"type": "string", "minLength": 1},
+        "network": {"type": "string", "minLength": 1},
+        "exclusion_reason": {"type": "string", "minLength": 1},
+        "notes": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"enum": ["contract", "program", "rpc"]}}},
+          "then": {"required": ["chain", "network"]}
+        },
+        {
+          "if": {"properties": {"in_scope": {"const": false}}},
+          "then": {"required": ["exclusion_reason"]}
+        }
+      ]
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_testing", "max_requests", "max_concurrency", "test_identities",
+        "oob_allowed", "real_funds_allowed", "impact_limit", "prohibited_effects",
+        "stop_conditions", "emergency_contact", "data_retention"
+      ],
+      "properties": {
+        "active_testing": {"type": "boolean"},
+        "max_requests": {"type": "integer", "minimum": 1},
+        "max_concurrency": {"type": "integer", "minimum": 1},
+        "test_identities": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "oob_allowed": {"type": "boolean"},
+        "real_funds_allowed": {"type": "boolean"},
+        "max_test_funds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["asset", "amount"],
+          "properties": {
+            "asset": {"type": "string", "minLength": 1},
+            "amount": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        "impact_limit": {"type": "string", "minLength": 1},
+        "prohibited_effects": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "stop_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "emergency_contact": {"type": "string", "minLength": 1},
+        "data_retention": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

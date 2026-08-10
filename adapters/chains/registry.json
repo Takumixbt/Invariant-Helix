@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "adapters": [
+    {
+      "adapter_id": "cardano-utxo", "chain_family": "cardano-utxo", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/cardano-utxo.md", "detection_markers": ["Plutus", "Aiken", "datum", "redeemer"],
+      "enumeration_strategy": "enumerate scripts, policies, UTXOs, datums, redeemers and transaction constraints",
+      "authority_model": "signatories, script context, minting policy and input ownership",
+      "state_model": "UTXO set, datum, value bundles, reference inputs and validity intervals",
+      "trace_strategy": "ledger emulator transaction trace with complete body and resulting UTXO set",
+      "simulation_strategy": "ledger emulator or isolated testnet fixture",
+      "property_strategy": "value conservation, policy authority, replay and datum authenticity properties",
+      "reproduction_format": "transaction body, inputs, outputs, datum, redeemer, policy and resulting UTXO set",
+      "known_gaps": ["no bundled native parser or emulator", "provider/indexer semantics require external validation"]
+    },
+    {
+      "adapter_id": "cosmwasm", "chain_family": "cosmwasm", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/cosmwasm.md", "detection_markers": ["CosmWasm", "wasm execute", "IBC"],
+      "enumeration_strategy": "enumerate contracts, instantiate/execute/query/migrate messages and IBC handlers",
+      "authority_model": "sender, admin, contract callbacks, capabilities and IBC channel authority",
+      "state_model": "contract storage, bank/CW assets, reply state and IBC packet lifecycle",
+      "trace_strategy": "native app/wasm event and submessage/reply trace",
+      "simulation_strategy": "multi-test, local chain or isolated testnet",
+      "property_strategy": "fund conservation, reply ordering, migration and IBC replay properties",
+      "reproduction_format": "messages, funds, height/time, events and storage/state diff",
+      "known_gaps": ["no bundled native parser or simulator", "module and relayer behavior is harness-dependent"]
+    },
+    {
+      "adapter_id": "evm", "chain_family": "evm", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/evm.md", "detection_markers": ["Solidity", "Vyper", "EVM bytecode", "ABI"],
+      "enumeration_strategy": "enumerate source/ABI/bytecode, entry points, storage layout, proxies and deployment metadata",
+      "authority_model": "msg.sender/value, signatures, roles, owners, proxy admins and timelocks",
+      "state_model": "storage slots, balances, allowances, indexes, checkpoints, prices and proxy state",
+      "trace_strategy": "compiler-pinned call trace, logs and state diff at a bound chain/block",
+      "simulation_strategy": "unit test, local deployment or pinned fork",
+      "property_strategy": "stateful invariants for authorization, conservation, solvency, units and ordering",
+      "reproduction_format": "compiler/config, chain/block, fixture state, transaction sequence, trace and state diff",
+      "known_gaps": ["no bundled compiler/parser/fork", "EVM variants require separate semantic validation"]
+    },
+    {
+      "adapter_id": "move", "chain_family": "move", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/move.md", "detection_markers": ["Move.toml", "module", "resource", "entry fun"],
+      "enumeration_strategy": "enumerate packages, modules, public entry functions, abilities, resources and objects",
+      "authority_model": "signers, capabilities, object ownership and module visibility",
+      "state_model": "resources, objects, tables, global storage and event state",
+      "trace_strategy": "native transaction trace and resource/object change set",
+      "simulation_strategy": "native test runner, local validator or sandbox",
+      "property_strategy": "resource conservation, capability scope, object ownership and abort-path properties",
+      "reproduction_format": "package/version, signer set, transaction sequence and resource change set",
+      "known_gaps": ["Aptos/Sui dialect differences require native specialization", "no bundled Move toolchain"]
+    },
+    {
+      "adapter_id": "near", "chain_family": "near", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/near.md", "detection_markers": ["near-sdk", "promise", "receipt", "access key"],
+      "enumeration_strategy": "enumerate contracts, methods, access keys, promises, callbacks and storage prefixes",
+      "authority_model": "predecessor/signer, access-key permissions and callback provenance",
+      "state_model": "contract storage, deposits, promises, receipts and async reconciliation",
+      "trace_strategy": "transaction plus complete receipt/callback chain and state changes",
+      "simulation_strategy": "sandbox/localnet or isolated testnet",
+      "property_strategy": "deposit conservation, callback authentication, retry and async finality properties",
+      "reproduction_format": "account/key context, calls, attached deposit, receipts and final state",
+      "known_gaps": ["no bundled sandbox", "cross-contract receipt/indexer completeness depends on provider"]
+    },
+    {
+      "adapter_id": "solana", "chain_family": "solana", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/solana.md", "detection_markers": ["Anchor.toml", "program id", "instruction", "PDA"],
+      "enumeration_strategy": "enumerate programs, IDL/instructions, account metas, PDAs, owners and token programs",
+      "authority_model": "signer/writable flags, owners, PDA seeds, CPI privilege and upgrade authority",
+      "state_model": "accounts, lamports/tokens, account data, sysvars and transaction ordering",
+      "trace_strategy": "instruction/CPI logs with pre/post account snapshots",
+      "simulation_strategy": "program-test, local validator or simulator",
+      "property_strategy": "account constraint, conservation, aliasing, CPI target and lifecycle properties",
+      "reproduction_format": "program/version, account metas/data, instruction sequence, logs and post-state",
+      "known_gaps": ["no bundled IDL parser or validator", "token extensions and runtime versions require pinning"]
+    },
+    {
+      "adapter_id": "starknet", "chain_family": "starknet", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/starknet.md", "detection_markers": ["Cairo", "Sierra", "CASM", "felt"],
+      "enumeration_strategy": "enumerate classes/contracts, entry points, storage, dispatch and upgrade paths",
+      "authority_model": "caller address, account abstraction, signatures and class/upgrade authority",
+      "state_model": "storage, nonces, class hashes, messages and L1/L2 state",
+      "trace_strategy": "native call trace, events, messages and storage diff",
+      "simulation_strategy": "native test framework, devnet or isolated testnet",
+      "property_strategy": "felt/range, authorization, replay, messaging and upgrade properties",
+      "reproduction_format": "compiler/class hashes, network/block, calls, trace and storage diff",
+      "known_gaps": ["no bundled Cairo compiler/devnet", "L1 messaging finality needs external evidence"]
+    },
+    {
+      "adapter_id": "substrate", "chain_family": "substrate", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/substrate.md", "detection_markers": ["FRAME", "pallet", "extrinsic", "runtime metadata"],
+      "enumeration_strategy": "enumerate pallets, calls, origins, storage, hooks, migrations and runtime upgrades",
+      "authority_model": "signed/root/collective/custom origins, proxies and governance",
+      "state_model": "runtime storage, balances/assets, queues, hooks and versioned migrations",
+      "trace_strategy": "extrinsic/events/storage diff bound to runtime metadata and block",
+      "simulation_strategy": "try-runtime, native tests, local node or isolated testnet",
+      "property_strategy": "origin, weight, storage migration, accounting and cross-consensus properties",
+      "reproduction_format": "runtime hash/metadata, block state, extrinsics, events and storage diff",
+      "known_gaps": ["no bundled metadata parser/node", "custom pallets and XCM versions require native specialization"]
+    },
+    {
+      "adapter_id": "ton", "chain_family": "ton", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/ton.md", "detection_markers": ["FunC", "Tact", "TVM", "cell"],
+      "enumeration_strategy": "enumerate contracts, message handlers, cells, dictionaries and bounce paths",
+      "authority_model": "message sender, signatures, seqno, wallet version and bounced-message provenance",
+      "state_model": "cells, balances, dictionaries, messages and asynchronous transaction chains",
+      "trace_strategy": "complete inbound/outbound message and transaction trace with cell/state diff",
+      "simulation_strategy": "TVM emulator, sandbox or isolated testnet",
+      "property_strategy": "message authentication, replay, bounce, gas/value conservation and async properties",
+      "reproduction_format": "code/data cells, messages, fees, transaction chain and final state",
+      "known_gaps": ["no bundled TVM emulator", "wallet and workchain semantics require version-specific validation"]
+    },
+    {
+      "adapter_id": "tron", "chain_family": "tron", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/tron.md", "detection_markers": ["TRON", "TVM", "energy", "bandwidth"],
+      "enumeration_strategy": "enumerate contracts/ABI/bytecode, permissions, resources and deployment metadata",
+      "authority_model": "account permissions, owner/active keys, caller and contract authority",
+      "state_model": "TVM storage, TRX/TRC assets, energy/bandwidth and account permissions",
+      "trace_strategy": "TRON-native transaction trace, events, resource usage and state diff",
+      "simulation_strategy": "TRON-native local/test environment",
+      "property_strategy": "permission, resource, value conservation, replay and TVM-specific behavior",
+      "reproduction_format": "network/block, contract version, transaction sequence, trace and state diff",
+      "known_gaps": ["no bundled TRON simulator", "EVM similarities must not substitute for TVM evidence"]
+    },
+    {
+      "adapter_id": "generic-rpc", "chain_family": "unknown", "status": "methodology-only", "maturity_tier": 3,
+      "document": "adapters/chains/generic-rpc.md", "detection_markers": ["RPC endpoint", "chain metadata", "transaction receipt"],
+      "enumeration_strategy": "enumerate visible accounts/programs, methods, messages, events and state changes",
+      "authority_model": "only authority visible in RPC/indexer evidence; unknown semantics remain explicit",
+      "state_model": "accounts/messages/events/state diffs without VM-specific assumptions",
+      "trace_strategy": "read-only RPC/indexer trace where supported",
+      "simulation_strategy": "none until a native adapter and safe environment are available",
+      "property_strategy": "generic reachability and conservation hypotheses only",
+      "reproduction_format": "RPC methods, network identity, messages/transactions, events and visible state diff",
+      "known_gaps": ["no native execution or authority semantics", "cannot support complete chain-audit assurance"]
+    }
+  ]
+}

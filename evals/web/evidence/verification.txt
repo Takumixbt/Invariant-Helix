@@ -1,0 +1,2 @@
+Independent synthetic verification repeated the owner and non-owner requests, traced route and service
+authorization, and confirmed that only the non-owner request violates the ownership invariant.

@@ -1,0 +1,39 @@
+{
+  "case_id": "eval-web-001",
+  "operator": "synthetic-evaluator",
+  "authorization_reference": "synthetic-fixture",
+  "authorization_expires_at": "2030-01-01T00:00:00Z",
+  "snapshot_id": "fixture-v1",
+  "target_kind": "web",
+  "rules_of_engagement": {
+    "active_testing": false,
+    "max_requests": 20,
+    "max_concurrency": 2,
+    "test_identities": ["user_a", "user_b"],
+    "oob_allowed": false,
+    "real_funds_allowed": false,
+    "impact_limit": "synthetic fixture only; no persistent side effects",
+    "prohibited_effects": ["availability impact", "access to non-synthetic data"],
+    "stop_conditions": ["unexpected state mutation", "target leaves fixture-v1"],
+    "emergency_contact": "synthetic-owner",
+    "data_retention": "delete restricted artifacts after evaluation"
+  },
+  "targets": [
+    {
+      "type": "web-origin",
+      "value": "https://app.example.test",
+      "in_scope": true,
+      "environment": "local",
+      "notes": "synthetic only"
+    },
+    {
+      "type": "web-origin",
+      "value": "https://admin.example.test",
+      "in_scope": false,
+      "environment": "local",
+      "exclusion_reason": "administrative plane is not part of this fixture"
+    }
+  ],
+  "allowed_capabilities": ["surface_inventory", "source_analysis", "evidence_manifest"],
+  "redaction_policy": "synthetic-public-v1"
+}

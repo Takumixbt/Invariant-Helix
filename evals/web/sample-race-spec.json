@@ -1,0 +1,26 @@
+{
+  "case_id": "eval-web-001",
+  "snapshot_id": "fixture-v1",
+  "actor_context": "user_a",
+  "url": "http://127.0.0.1:1/test",
+  "target_allowlist": ["http://127.0.0.1:1/test"],
+  "method": "POST",
+  "headers": {"Content-Type": "application/json"},
+  "body": {"synthetic": true},
+  "concurrency": 2,
+  "timeout_seconds": 2,
+  "capture_body": false,
+  "barrier_policy": "thread-release",
+  "sequential_control": {
+    "status": "passed",
+    "evidence_ref": "artifact:ec80dfef68a153d0131ea268",
+    "summary": "one sequential request produces one synthetic outcome"
+  },
+  "negative_control": {
+    "status": "passed",
+    "evidence_ref": "artifact:5557b62d891c6f683690bf8c",
+    "summary": "an invalid synthetic key produces no outcome"
+  },
+  "impact_limit": "synthetic fixture only; no persistent side effects",
+  "reconciliation_plan": "compare the synthetic ledger counter before and after the run"
+}

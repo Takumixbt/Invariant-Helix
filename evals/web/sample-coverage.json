@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "case_id": "eval-web-001",
+  "snapshot_id": "fixture-v1",
+  "termination_status": "complete_with_limitations",
+  "items": [
+    {
+      "coverage_id": "coverage:profile-authorization",
+      "case_id": "eval-web-001",
+      "snapshot_id": "fixture-v1",
+      "target_refs": ["route:profile", "state:profile"],
+      "impact_class": "high",
+      "owner": "web-auth-specialist",
+      "hypothesis_families": ["cross-object authorization", "cross-tenant authorization"],
+      "planned_observations": ["compare the same existing object across owner and non-owner identities"],
+      "negative_controls": ["owner request succeeds", "non-owner request is denied without changing the object"],
+      "verifier_id": "independent-web-verifier",
+      "status": "verified",
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268", "artifact:5557b62d891c6f683690bf8c"],
+      "dependencies": []
+    },
+    {
+      "coverage_id": "coverage:profile-export",
+      "case_id": "eval-web-001",
+      "snapshot_id": "fixture-v1",
+      "target_refs": ["workflow:profile-export"],
+      "impact_class": "low",
+      "owner": "business-logic-specialist",
+      "hypothesis_families": ["bulk object authorization"],
+      "planned_observations": ["compare export results across fixture identities"],
+      "negative_controls": ["empty export for an identity with no objects"],
+      "verifier_id": "independent-web-verifier",
+      "status": "blocked",
+      "blocker": "the synthetic fixture has no export endpoint",
+      "evidence_refs": [],
+      "dependencies": ["coverage:profile-authorization"]
+    }
+  ]
+}

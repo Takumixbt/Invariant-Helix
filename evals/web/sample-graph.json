@@ -1,0 +1,83 @@
+{
+  "case_id": "eval-web-001",
+  "edges": [
+    {
+      "confidence": {"level": "high", "reason": "captured request"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "from": "identity:user-a",
+      "id": "edge:64f6d3958b83b864045cc0e4",
+      "locator": "GET /api/profile",
+      "relation": "reaches",
+      "status": "observed",
+      "to": "route:profile",
+      "valid_for": "fixture-v1"
+    },
+    {
+      "confidence": {"level": "medium", "reason": "fixture trace"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "from": "route:profile",
+      "id": "edge:c9f05e9e87c39c5254009834",
+      "locator": "profile service lookup",
+      "relation": "reads",
+      "status": "observed",
+      "to": "state:profile",
+      "valid_for": "fixture-v1"
+    }
+  ],
+  "nodes": [
+    {
+      "case_id": "eval-web-001",
+      "confidence": {"level": "high", "reason": "fixture identity"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "id": "identity:user-a",
+      "kind": "identity",
+      "label": "user_a",
+      "locators": ["fixture:user-a"],
+      "properties": {"role": "customer", "token_fingerprint": "redacted"},
+      "sensitivity": "internal",
+      "snapshot_id": "fixture-v1",
+      "status": "observed"
+    },
+    {
+      "case_id": "eval-web-001",
+      "confidence": {"level": "high", "reason": "declared synthetic target"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "id": "origin:app",
+      "kind": "origin",
+      "label": "app.example.test",
+      "locators": ["scope:target-0"],
+      "properties": {"scheme": "https", "scope": "synthetic"},
+      "sensitivity": "public",
+      "snapshot_id": "fixture-v1",
+      "status": "observed"
+    },
+    {
+      "case_id": "eval-web-001",
+      "confidence": {"level": "high", "reason": "captured request"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "id": "route:profile",
+      "kind": "route",
+      "label": "GET /api/profile",
+      "locators": ["GET /api/profile?user_id=:id"],
+      "properties": {"method": "GET", "object_parameter": "user_id"},
+      "sensitivity": "internal",
+      "snapshot_id": "fixture-v1",
+      "status": "observed"
+    },
+    {
+      "case_id": "eval-web-001",
+      "confidence": {"level": "high", "reason": "fixture state definition"},
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"],
+      "id": "state:profile",
+      "kind": "state",
+      "label": "profile object store",
+      "locators": ["fixture:profile-store"],
+      "properties": {"owner_key": "user_id", "tenant_key": "tenant_id"},
+      "sensitivity": "restricted",
+      "snapshot_id": "fixture-v1",
+      "status": "observed"
+    }
+  ],
+  "schema_version": "1.0",
+  "snapshot_id": "fixture-v1"
+}

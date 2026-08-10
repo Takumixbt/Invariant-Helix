@@ -1,0 +1,2 @@
+Synthetic trace: deposit 100 shares, advance reward index, partially withdraw 40 shares, then claim.
+The partial-withdrawal path leaves reward debt inconsistent with the reconciled reference state.

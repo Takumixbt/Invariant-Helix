@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "finding_id": "EVM-EVAL-001",
+      "case_id": "eval-evm-001",
+      "snapshot_id": "fixture-v1",
+      "title": "Synthetic partial-withdrawal reward accounting gap",
+      "severity": "medium",
+      "confidence": {"level": "high", "reason": "deterministic trace and independent replay"},
+      "status": "verified",
+      "status_history": [
+        {"status": "hypothesis", "actor_id": "state-invariant-specialist", "evidence_refs": ["artifact:5e9b349b67e2820b97ae161d"]},
+        {"status": "under_verification", "actor_id": "verification-controller", "evidence_refs": ["artifact:5e9b349b67e2820b97ae161d"]},
+        {"status": "verified", "actor_id": "independent-evm-verifier", "evidence_refs": ["artifact:c2a9f28f22aad6b0f62dede8"]}
+      ],
+      "proof_level": "P4",
+      "discoverer_id": "state-invariant-specialist",
+      "verifier_id": "independent-evm-verifier",
+      "root_cause": "The partial withdrawal path reduces shares but does not reconcile reward debt before a later claim.",
+      "security_claim": "Reward debt must represent current shares and reward index after every permitted position mutation.",
+      "violated_invariant_or_trust_assumption": "reward_debt = f(shares, reward_index) at every claim boundary",
+      "affected_components": ["partial withdrawal", "reward claim accounting"],
+      "preconditions": ["user has shares", "reward index advances", "partial withdrawal is allowed"],
+      "reachable_path": ["deposit", "advance index", "partial withdraw", "claim"],
+      "minimal_trigger_sequence": ["deposit 100 shares", "advance index", "withdraw 40 shares", "claim"],
+      "observable_consequence": "synthetic claim amount differs from the reconciled reference calculation",
+      "impact": "incorrect reward accounting in the synthetic fixture",
+      "scope_and_version": "eval-evm-001 at fixture-v1",
+      "verification_method": "deterministic invariant replay and complete internal-call trace",
+      "falsification_result": {
+        "attempted": true,
+        "verdict": "TRUE_POSITIVE",
+        "verifier_id": "independent-evm-verifier",
+        "disproof_criteria": ["modifier reconciles reward debt", "internal hook reconciles partial withdrawal", "reference and implementation calculations agree"],
+        "evidence_refs": ["artifact:c2a9f28f22aad6b0f62dede8"],
+        "independent_reproduction": true,
+        "notes": "The full-withdrawal control reconciles correctly; the partial path does not."
+      },
+      "fix_guidance": "Reconcile reward debt on every share mutation before claims become reachable.",
+      "evidence_refs": ["artifact:5e9b349b67e2820b97ae161d", "artifact:c2a9f28f22aad6b0f62dede8"],
+      "coverage_refs": ["coverage:partial-withdrawal-accounting"],
+      "coverage_impact": "partial withdrawal covered; upgrade migration remains blocked",
+      "dedup_key": "reward-debt-partial-mutation"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+Independent synthetic verification replayed the minimal sequence and the full-withdrawal negative control.
+The accounting delta appears only on the partial path in fixture-v1.

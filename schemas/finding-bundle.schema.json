@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant-helix.dev/schemas/finding-bundle.schema.json",
+  "title": "Invariant Helix finding bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    }
+  },
+  "$defs": {
+    "nonEmptyStrings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "finding": {
+      "type": "object",
+      "required": [
+        "finding_id", "case_id", "snapshot_id", "title", "severity", "confidence", "status",
+        "status_history", "proof_level", "discoverer_id", "verifier_id", "root_cause",
+        "security_claim", "violated_invariant_or_trust_assumption", "affected_components",
+        "preconditions", "reachable_path", "minimal_trigger_sequence", "observable_consequence",
+        "impact", "scope_and_version", "verification_method", "falsification_result",
+        "fix_guidance", "evidence_refs", "coverage_refs", "coverage_impact", "dedup_key"
+      ],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["critical", "high", "medium", "low", "informational"]},
+        "confidence": {
+          "type": "object",
+          "required": ["level", "reason"],
+          "properties": {"level": {"enum": ["low", "medium", "high"]}, "reason": {"type": "string", "minLength": 1}}
+        },
+        "status": {"enum": ["hypothesis", "under_verification", "verified", "refuted", "downgraded", "duplicate", "inconclusive", "released"]},
+        "status_history": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "proof_level": {"enum": ["P0", "P1", "P2", "P3", "P4"]},
+        "discoverer_id": {"type": "string", "minLength": 1},
+        "verifier_id": {"type": "string", "minLength": 1},
+        "root_cause": {"type": "string", "minLength": 1},
+        "security_claim": {"type": "string", "minLength": 1},
+        "violated_invariant_or_trust_assumption": {"type": "string", "minLength": 1},
+        "affected_components": {"$ref": "#/$defs/nonEmptyStrings"},
+        "preconditions": {"$ref": "#/$defs/nonEmptyStrings"},
+        "reachable_path": {"$ref": "#/$defs/nonEmptyStrings"},
+        "minimal_trigger_sequence": {"$ref": "#/$defs/nonEmptyStrings"},
+        "observable_consequence": {"type": "string", "minLength": 1},
+        "impact": {"type": "string", "minLength": 1},
+        "scope_and_version": {"type": "string", "minLength": 1},
+        "verification_method": {"type": "string", "minLength": 1},
+        "falsification_result": {"type": "object"},
+        "fix_guidance": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/nonEmptyStrings"},
+        "coverage_refs": {"$ref": "#/$defs/nonEmptyStrings"},
+        "coverage_impact": {"type": "string", "minLength": 1},
+        "dedup_key": {"type": "string", "minLength": 1},
+        "runtime_proof_exception": {"type": "object"}
+      }
+    }
+  }
+}

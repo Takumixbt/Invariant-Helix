@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "finding_id": "WEB-EVAL-001",
+      "case_id": "eval-web-001",
+      "snapshot_id": "fixture-v1",
+      "title": "Synthetic object authorization failure",
+      "severity": "high",
+      "confidence": {"level": "high", "reason": "independent fixture reproduction and route trace"},
+      "status": "verified",
+      "status_history": [
+        {"status": "hypothesis", "actor_id": "web-auth-specialist", "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"]},
+        {"status": "under_verification", "actor_id": "verification-controller", "evidence_refs": ["artifact:ec80dfef68a153d0131ea268"]},
+        {"status": "verified", "actor_id": "independent-web-verifier", "evidence_refs": ["artifact:5557b62d891c6f683690bf8c"]}
+      ],
+      "proof_level": "P4",
+      "discoverer_id": "web-auth-specialist",
+      "verifier_id": "independent-web-verifier",
+      "root_cause": "The API authorizes the session but does not bind the object to the actor.",
+      "security_claim": "A customer may read only objects belonging to that customer or an allowed tenant.",
+      "violated_invariant_or_trust_assumption": "object_owner(object) must include actor before profile data is returned",
+      "affected_components": ["GET /api/profile", "profile authorization service"],
+      "preconditions": ["user_a and user_b synthetic test identities exist"],
+      "reachable_path": ["user_b session", "GET /api/profile?user_id=user_a", "profile response"],
+      "minimal_trigger_sequence": ["authenticate as user_b", "request the existing user_a object", "compare with the user_a owner control"],
+      "observable_consequence": "user_b receives the synthetic user_a profile marker",
+      "impact": "cross-account disclosure in the synthetic fixture",
+      "scope_and_version": "eval-web-001 at fixture-v1",
+      "verification_method": "two-context differential API replay, source trace, and owner/non-owner controls",
+      "falsification_result": {
+        "attempted": true,
+        "verdict": "TRUE_POSITIVE",
+        "verifier_id": "independent-web-verifier",
+        "disproof_criteria": ["middleware enforces object ownership", "service filters by actor", "response contains only user_b data"],
+        "evidence_refs": ["artifact:5557b62d891c6f683690bf8c"],
+        "independent_reproduction": true,
+        "notes": "The same existing object was compared across owner and non-owner contexts."
+      },
+      "fix_guidance": "Enforce object and tenant authorization in the service query before serializing profile data.",
+      "evidence_refs": ["artifact:ec80dfef68a153d0131ea268", "artifact:5557b62d891c6f683690bf8c"],
+      "coverage_refs": ["coverage:profile-authorization"],
+      "coverage_impact": "profile object authorization covered; exports remain untested",
+      "dedup_key": "profile-object-auth"
+    }
+  ]
+}

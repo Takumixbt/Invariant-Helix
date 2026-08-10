@@ -1,0 +1,31 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "artifact:ec80dfef68a153d0131ea268",
+      "content_digest": "sha256:a7d39d87b8f74241be99d160f9874fdec5b46ab588bc528ea0e1d6834f54d854",
+      "created_at": "2026-08-10T10:06:00.889964+00:00",
+      "media_type": "text/plain",
+      "producer": "synthetic-evaluator",
+      "redaction_status": "public-safe",
+      "relative_path": "observation.txt",
+      "size": 194,
+      "snapshot_id": "fixture-v1"
+    },
+    {
+      "artifact_id": "artifact:5557b62d891c6f683690bf8c",
+      "content_digest": "sha256:1d07f319dbfba4d0fb43dbfaa58d53afa261faa59b8ad580aafff2cadc8ab73d",
+      "created_at": "2026-08-10T10:06:00.894523+00:00",
+      "media_type": "text/plain",
+      "producer": "synthetic-evaluator",
+      "redaction_status": "public-safe",
+      "relative_path": "verification.txt",
+      "size": 198,
+      "snapshot_id": "fixture-v1"
+    }
+  ],
+  "case_id": "eval-web-001",
+  "created_at": "2026-08-10T10:06:27.410307+00:00",
+  "producer": "synthetic-evaluator",
+  "schema_version": "1.0",
+  "snapshot_id": "fixture-v1"
+}

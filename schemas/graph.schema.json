@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant-helix.dev/schemas/graph.schema.json",
+  "title": "Invariant Helix graph",
+  "type": "object",
+  "required": ["schema_version", "case_id", "snapshot_id", "nodes", "edges"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_id": {"type": "string", "minLength": 1},
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
+    "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}},
+    "merge_conflicts": {"type": "array"},
+    "source_graphs": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reason"],
+      "properties": {
+        "level": {"enum": ["low", "medium", "high"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "kind", "label", "case_id", "snapshot_id", "status", "confidence",
+        "locators", "evidence_refs", "properties", "sensitivity"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 3},
+        "kind": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["observed", "inferred", "hypothesized", "verified", "refuted", "stale"]},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "locators": {"type": "array", "items": {"type": "string"}},
+        "evidence_refs": {"type": "array", "items": {"type": "string"}},
+        "properties": {"type": "object"},
+        "sensitivity": {"enum": ["public", "internal", "secret-redacted", "restricted"]}
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "relation", "to", "status", "confidence", "evidence_refs", "locator", "valid_for"],
+      "properties": {
+        "id": {"type": "string", "minLength": 3},
+        "from": {"type": "string", "minLength": 3},
+        "relation": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 3},
+        "status": {"enum": ["observed", "inferred", "hypothesized", "verified", "refuted", "stale"]},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "evidence_refs": {"type": "array", "items": {"type": "string"}},
+        "locator": {"type": ["string", "null"]},
+        "valid_for": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

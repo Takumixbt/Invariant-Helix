@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant-helix.dev/schemas/evidence-manifest.schema.json",
+  "title": "Invariant Helix evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "snapshot_id", "producer", "created_at", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_id": {"type": "string", "minLength": 1},
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "producer": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id", "relative_path", "media_type", "size", "content_digest",
+          "created_at", "producer", "snapshot_id", "redaction_status"
+        ],
+        "properties": {
+          "artifact_id": {"type": "string", "pattern": "^artifact:[a-f0-9]{24}$"},
+          "relative_path": {"type": "string", "minLength": 1},
+          "media_type": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 0},
+          "content_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "producer": {"type": "string", "minLength": 1},
+          "snapshot_id": {"type": "string", "minLength": 1},
+          "redaction_status": {"enum": ["unreviewed", "redacted", "restricted", "public-safe"]}
+        }
+      }
+    }
+  }
+}

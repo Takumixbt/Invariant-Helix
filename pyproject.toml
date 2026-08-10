@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "invariant-helix"
+version = "0.2.0"
+description = "Evidence-gated, graph-driven security audit methodology"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Takumixbt"}]
+
+[project.scripts]
+ih-inventory = "scripts.inventory:main"
+ih-normalize = "scripts.normalize_observations:main"
+ih-merge = "scripts.graph_merge:main"
+ih-validate-findings = "scripts.validate_findings:main"
+ih-validate-coverage = "scripts.validate_coverage:main"
+ih-evidence = "scripts.evidence_manifest:main"
+ih-race = "scripts.race_runner:main"
+ih-cve = "scripts.cve_match:main"
+ih-validate-adapters = "scripts.validate_adapters:main"
+ih-evaluate-case = "scripts.evaluate_case:main"
+
+[tool.setuptools]
+packages = ["scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

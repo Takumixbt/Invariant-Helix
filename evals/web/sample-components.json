@@ -1,0 +1,8 @@
+{
+  "components": [
+    {
+      "name": "synthetic-service",
+      "version": "1.2.3"
+    }
+  ]
+}
