@@ -1,0 +1,5 @@
+# Synthetic fixture Foundry config so x-ray detects the EVM chain family.
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]

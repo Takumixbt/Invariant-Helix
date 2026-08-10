@@ -1,0 +1,6 @@
+# Synthetic fixture so x-ray detects the Solana chain family.
+[programs.localnet]
+vault = "Fixture1111111111111111111111111111111111111"
+
+[provider]
+cluster = "localnet"

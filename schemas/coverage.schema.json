@@ -35,7 +35,9 @@
           "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
           "dependencies": {"type": "array", "items": {"type": "string", "minLength": 1}},
           "blocker": {"type": "string", "minLength": 1},
-          "exclusion_reason": {"type": "string", "minLength": 1}
+          "exclusion_reason": {"type": "string", "minLength": 1},
+          "lens": {"type": "string", "minLength": 1, "description": "attacker lens this coverage item belongs to"},
+          "capability": {"type": "string", "minLength": 1, "description": "capability required to exercise this item"}
         }
       }
     }

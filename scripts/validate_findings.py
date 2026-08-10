@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .cvss import base_score
     from .evidence_manifest import load_manifest, validate_manifest_structure, verify
     from .inventory import load_scope, validate_scope
 except ImportError:  # direct script execution
+    from cvss import base_score
     from evidence_manifest import load_manifest, validate_manifest_structure, verify
     from inventory import load_scope, validate_scope
 
@@ -146,6 +148,67 @@ def _validate_falsification(value: Any, finding: dict[str, Any], prefix: str, er
         errors.append(f"{prefix} status={status} requires falsification verdict {expected}")
 
 
+def _validate_cvss(value: Any, finding: dict[str, Any], prefix: str, errors: list[str]) -> None:
+    """Optional CVSS 3.1 field: a vector string or an object carrying one. Its band
+    must agree with the finding severity so the two cannot silently diverge."""
+    vector = value.get("vector") if isinstance(value, dict) else value
+    if not isinstance(vector, str) or not vector.strip():
+        errors.append(f"{prefix} cvss must be a vector string or an object with a 'vector'")
+        return
+    try:
+        scored = base_score(vector)
+    except (ValueError, TypeError) as exc:
+        errors.append(f"{prefix} cvss vector is invalid: {exc}")
+        return
+    severity = str(finding.get("severity", "")).lower()
+    if severity in SEVERITIES and scored["ih_severity"] != severity:
+        errors.append(
+            f"{prefix} cvss band {scored['severity_band']} maps to {scored['ih_severity']} "
+            f"but severity is {severity}"
+        )
+
+
+def _validate_extensions(
+    finding: dict[str, Any],
+    prefix: str,
+    errors: list[str],
+    *,
+    content_digests: set[str],
+    manifest_present: bool,
+    releasable_ids: set[str],
+) -> None:
+    """Validate the lens/knowledge-base/convergence/kill-chain extension fields."""
+    if "cvss" in finding:
+        _validate_cvss(finding["cvss"], finding, prefix, errors)
+    lens = finding.get("lens")
+    if lens is not None and not (isinstance(lens, str) and lens.strip()):
+        errors.append(f"{prefix} lens must be a non-empty string")
+    bundle_digest = finding.get("bundle_digest")
+    if lens:
+        # A lens finding must cite the hashed bundle its agent actually read.
+        if not (isinstance(bundle_digest, str) and bundle_digest.strip()):
+            errors.append(f"{prefix} lens finding requires a bundle_digest")
+        elif manifest_present and bundle_digest not in content_digests:
+            errors.append(f"{prefix} bundle_digest does not resolve to a manifest artifact")
+    convergence = finding.get("convergence")
+    if convergence is not None:
+        if not isinstance(convergence, dict):
+            errors.append(f"{prefix} convergence must be an object")
+        elif str(convergence.get("implies_status", "")).lower() in {"verified", "released", "downgraded"}:
+            errors.append(f"{prefix} convergence must not imply a verified/released status")
+    kb_refs = finding.get("kb_refs")
+    if kb_refs is not None and not _string_list(kb_refs):
+        errors.append(f"{prefix} kb_refs must be a non-empty array of strings")
+    chain_of = finding.get("chain_of")
+    if chain_of is not None:
+        if not _string_list(chain_of):
+            errors.append(f"{prefix} chain_of must be a non-empty array of finding ids")
+        else:
+            unresolved = [ref for ref in chain_of if ref not in releasable_ids]
+            if unresolved:
+                errors.append(f"{prefix} chain_of parents are not releasable: {', '.join(sorted(unresolved))}")
+
+
 def _evidence_refs(finding: dict[str, Any]) -> set[str]:
     refs = set(finding.get("evidence_refs", [])) if isinstance(finding.get("evidence_refs"), list) else set()
     falsification = finding.get("falsification_result")
@@ -173,6 +236,18 @@ def validate(
         record.get("artifact_id")
         for record in (manifest or {}).get("artifacts", [])
         if isinstance(record, dict)
+    }
+    content_digests = {
+        record.get("content_digest")
+        for record in (manifest or {}).get("artifacts", [])
+        if isinstance(record, dict)
+    }
+    # A kill-chain parent must itself be a releasable finding in this bundle.
+    releasable_ids = {
+        str(item.get("finding_id"))
+        for item in items
+        if isinstance(item, dict)
+        and str(item.get("status", "")).lower() in (RELEASABLE | {"released"})
     }
     for index, finding in enumerate(items):
         prefix = f"finding[{index}]"
@@ -205,6 +280,14 @@ def validate(
         _validate_confidence(finding.get("confidence"), prefix, errors)
         _validate_history(finding.get("status_history"), status, prefix, errors)
         _validate_falsification(finding.get("falsification_result"), finding, prefix, errors)
+        _validate_extensions(
+            finding,
+            prefix,
+            errors,
+            content_digests={str(digest) for digest in content_digests if digest},
+            manifest_present=manifest is not None,
+            releasable_ids=releasable_ids,
+        )
         if proof_level == "P4" and finding.get("falsification_result", {}).get("independent_reproduction") is not True:
             errors.append(f"{prefix} P4 requires independent reproduction")
         if finding.get("discoverer_id") == finding.get("verifier_id"):

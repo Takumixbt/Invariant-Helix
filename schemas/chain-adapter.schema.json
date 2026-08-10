@@ -33,7 +33,13 @@
           "simulation_strategy": {"type": "string", "minLength": 1},
           "property_strategy": {"type": "string", "minLength": 1},
           "reproduction_format": {"type": "string", "minLength": 1},
-          "known_gaps": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          "known_gaps": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "entry_point_patterns": {
+            "type": "object",
+            "minProperties": 1,
+            "description": "optional: language -> POSIX-ERE patterns for entry-point extraction",
+            "additionalProperties": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          }
         }
       }
     }

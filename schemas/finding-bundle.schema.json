@@ -56,7 +56,20 @@
         "coverage_refs": {"$ref": "#/$defs/nonEmptyStrings"},
         "coverage_impact": {"type": "string", "minLength": 1},
         "dedup_key": {"type": "string", "minLength": 1},
-        "runtime_proof_exception": {"type": "object"}
+        "runtime_proof_exception": {"type": "object"},
+        "cvss": {
+          "description": "Optional CVSS 3.1 base score; its band must match severity.",
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "object", "required": ["vector"], "properties": {"vector": {"type": "string", "minLength": 1}}}
+          ]
+        },
+        "lens": {"type": "string", "minLength": 1, "description": "attacker lens that produced this finding"},
+        "bundle_digest": {"type": "string", "minLength": 1, "description": "content_digest of the hashed lens bundle the agent read"},
+        "convergence": {"type": "object", "description": "multi-lens agreement metadata; may set priority/confidence, never status"},
+        "kb_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "knowledge-base leads that seeded this hypothesis"},
+        "chain_of": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "parent finding ids composed into this kill-chain; each must be releasable"},
+        "priority": {"enum": ["normal", "elevated"]}
       }
     }
   }

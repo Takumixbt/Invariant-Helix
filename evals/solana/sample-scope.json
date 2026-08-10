@@ -1,0 +1,34 @@
+{
+  "case_id": "eval-solana-001",
+  "operator": "synthetic-evaluator",
+  "authorization_reference": "synthetic-fixture",
+  "authorization_expires_at": "2030-01-01T00:00:00Z",
+  "snapshot_id": "fixture-v1",
+  "target_kind": "chain",
+  "rules_of_engagement": {
+    "active_testing": false,
+    "max_requests": 100,
+    "max_concurrency": 1,
+    "test_identities": ["fixture-user"],
+    "oob_allowed": false,
+    "real_funds_allowed": false,
+    "impact_limit": "local deterministic fixture only",
+    "prohibited_effects": ["live-chain transaction", "real-fund movement"],
+    "stop_conditions": ["fixture state differs from fixture-v1"],
+    "emergency_contact": "synthetic-owner",
+    "data_retention": "retain public synthetic artifacts"
+  },
+  "targets": [
+    {
+      "type": "program",
+      "value": "Fixture1111111111111111111111111111111111111",
+      "chain": "solana",
+      "network": "local-fixture",
+      "in_scope": true,
+      "environment": "local",
+      "notes": "non-EVM chain-neutrality fixture"
+    }
+  ],
+  "allowed_capabilities": ["source_analysis", "chain_simulation", "execution_trace", "property_fuzzing", "evidence_manifest"],
+  "redaction_policy": "synthetic-public-v1"
+}

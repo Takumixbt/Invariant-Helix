@@ -60,6 +60,20 @@ def validate_registry(value: Any, *, project_root: Path) -> list[str]:
         document = adapter.get("document")
         if not isinstance(document, str) or Path(document).is_absolute() or not (project_root / str(document)).is_file():
             errors.append(f"{prefix}.document does not resolve inside the project")
+        patterns = adapter.get("entry_point_patterns")
+        if patterns is not None:
+            if not isinstance(patterns, dict) or not patterns:
+                errors.append(f"{prefix}.entry_point_patterns must be a non-empty object when present")
+            else:
+                for language, plist in patterns.items():
+                    if (
+                        not isinstance(language, str)
+                        or not language.strip()
+                        or not isinstance(plist, list)
+                        or not plist
+                        or not all(isinstance(item, str) and item.strip() for item in plist)
+                    ):
+                        errors.append(f"{prefix}.entry_point_patterns[{language}] must map to a non-empty string array")
     return errors
 
 

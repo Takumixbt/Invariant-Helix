@@ -36,6 +36,17 @@ Do not let a branch read another branch's unverified narrative as truth.
 Provide the branch's evidence and questions, then require the branch to form
 its own conclusion.
 
+## Lens dispatch
+
+`ih-lens-dispatch` implements this scheduling for the attacker lenses
+(`references/lenses/`). It reads the graph, selects only the lenses justified by present
+node kinds, binds each to a capability, and assigns an owner plus a distinct verifier at
+plan time — so verifier independence is structural, not a later promise. A lens whose
+capability is unavailable, or that cannot be given an independent verifier, is planned as
+blocked coverage. Run each planned lens as a parallel branch reading its hashed bundle
+(`ih-lens-bundle` + `ih-evidence`); the controller merges only through the branch-artifact
+protocol below and never lets one lens read another's unverified narrative as truth.
+
 ## Branch artifact
 
 Every branch writes one artifact containing:

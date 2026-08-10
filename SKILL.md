@@ -165,30 +165,42 @@ real-fund mode because it cannot enforce a monetary ceiling.
 Do not convert incomplete coverage into a clean bill of health. Release verified
 findings alongside a separate coverage-debt and limitations inventory.
 
+## Lens dispatch and grounding (G5)
+
+Generate hypotheses with the attacker lenses in `references/lenses/`. `ih-lens-dispatch`
+selects only the lenses the graph justifies, binds each to an available capability, and
+assigns an independent verifier at plan time (discoverer ≠ verifier). `ih-lens-bundle`
+builds each lens a deterministic bundle; `ih-evidence` hashes it so a lens finding's
+`bundle_digest` resolves to the exact input its agent read. Ground every hypothesis with
+`ih-kb-match` against the knowledge base — a match is a lead, never a finding. Convergence
+(`ih-converge`) raises priority and confidence, never status.
+
+## Scoring and release (G9)
+
+Score released findings with `ih-cvss` (the band must match `severity`). Compose
+gate-passed findings into kill chains with `ih-chain` (only from existing graph edges).
+Frame the release with `knowledge/report-templates/` per platform. Run
+`ih-check-capabilities` to record any missing tool as blocked coverage.
+
 ## References
 
 Load the base safety, core methodology, coverage, evidence, graph, coordination,
 and verification references for every case. Then load only relevant mode files:
 
-- core-methodology.md
-- safety-and-scope.md
-- coverage-and-termination.md
-- evidence-and-triage.md
-- graph-engineering.md
-- agent-coordination.md
-- verification-and-falsification.md
-- requirements.md
-- web-recon.md
-- web-toolchain.md
-- browser-and-session-model.md
-- auth-and-business-logic.md
-- race-testing.md
-- infrastructure-audit.md
-- smart-contract-audit.md
-- chain-neutral-ir.md
-- chain-adapters.md
-- invariant-taxonomy.md
-- incident-patterns.md
-- cve-intelligence.md
-- pashov-integration.md
-- nemesis-integration.md
+- method/core-methodology.md, method/safety-and-scope.md,
+  method/coverage-and-termination.md, method/evidence-and-triage.md,
+  method/graph-engineering.md, method/agent-coordination.md,
+  method/verification-and-falsification.md, method/requirements.md,
+  method/reporting.md, method/xray.md, method/infrastructure-audit.md
+- lenses/shared-rules.md, lenses/auditor-sop.md, lenses/nemesis-loop.md, and the
+  17 lens profiles (access-control, math-precision, economic, execution-trace,
+  invariant-state, periphery-integration, first-principles, asymmetry, boundary,
+  numerical-gap, trust-gap, flow-gap, web-api, auth-session, recon-infra,
+  credential-leak, race-condition)
+- web/web-recon.md, web/web-toolchain.md, web/browser-and-session-model.md,
+  web/auth-and-business-logic.md, web/race-testing.md
+- chains/smart-contract-audit.md, chains/chain-neutral-ir.md, chains/chain-adapters.md,
+  chains/invariant-taxonomy.md, chains/property-fuzzing.md
+- knowledge/incident-patterns.md, knowledge/cve-intelligence.md,
+  knowledge/knowledge-base.md, knowledge/pashov-integration.md,
+  knowledge/nemesis-integration.md

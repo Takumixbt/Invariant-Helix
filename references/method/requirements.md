@@ -68,6 +68,33 @@ identity/policy analyzers, protocol-aware HTTP clients and audit logs.
 Isolated parser/proxy labs, provider-native policy simulation, local clusters,
 supply-chain provenance verification, and independent runtime verification.
 
+## Property-fuzzing tier
+
+Property fuzzing (`property_fuzzing` capability) needs a backend on PATH: echidna or
+medusa (EVM stateful), Foundry `forge` (invariant), halmos/certora (formal), or a
+chain-native fuzzer (Anchor/trident, Move prover, cw-multi-test). Absent = blocked
+coverage, never a pass.
+
+## Toolchain matrix (per chain family)
+
+`ih-check-capabilities` probes PATH and maps installed tools to the 13 capability
+names, emitting blocked coverage for the rest. Concrete backings:
+
+| Family | Toolchain | Capabilities supplied |
+|---|---|---|
+| EVM | foundry (`forge`/`cast`/`anvil`), `solc`, slither | source_analysis, chain_simulation, execution_trace |
+| EVM fuzz/formal | echidna, medusa, halmos, certora | property_fuzzing |
+| Solana | `cargo`, solana CLI, anchor, trident | source_analysis, chain_simulation, execution_trace, property_fuzzing |
+| Move (Aptos/Sui) | aptos or sui CLI, move-prover | source_analysis, chain_simulation, property_fuzzing |
+| CosmWasm | `cargo`, cw-multi-test | source_analysis, chain_simulation, property_fuzzing |
+| Starknet/Cairo | scarb, starknet-foundry | source_analysis, chain_simulation, property_fuzzing |
+| NEAR/Substrate/TON/Tron/Cardano | per adapter `known_gaps` (Tier 3) | none executable yet — coverage debt |
+| Web | scrapling, nmap/ffuf/amass/httpx/gobuster, Burp-MCP, chromium | surface_inventory, http_crawl, browser_workflow, proxy_observation, oob_observation |
+| Shared | curl, node/npm, git, ripgrep | request_replay, harness glue |
+
+Install commands are in `INSTALL.md`. `synchronized_requests`, `evidence_manifest`, and
+basic `source_analysis` are bundled with Invariant Helix and always available.
+
 ## Missing capability behavior
 
 The controller must write a blocked coverage item naming:

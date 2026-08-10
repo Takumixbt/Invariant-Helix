@@ -73,3 +73,25 @@ jobs:
             --inventory evals/web/sample-components.json \
             --cves evals/web/sample-cves.json \
             --output /tmp/invariant-helix-cves.json
+      - name: Validate audit engine (x-ray, knowledge base, lenses, scoring)
+        run: |
+          python scripts/check_capabilities.py --case-manifest evals/evm/sample-scope.json \
+            --emit-blocked-coverage /tmp/ih-blocked.json
+          python scripts/cvss.py "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H" --json
+          # x-ray produces a graph-valid model on EVM and on a non-EVM fixture
+          python scripts/xray_enumerate.py --scope evals/evm/sample-scope.json \
+            --root evals/evm --output /tmp/ih-xray-evm.jsonl
+          python scripts/normalize_observations.py /tmp/ih-xray-evm.jsonl --output /tmp/ih-xray-evm-graph.json
+          python scripts/xray_enumerate.py --scope evals/solana/sample-scope.json \
+            --root evals/solana --output /tmp/ih-xray-sol.jsonl
+          python scripts/normalize_observations.py /tmp/ih-xray-sol.jsonl --output /tmp/ih-xray-sol-graph.json
+          # knowledge base normalizes and grounds hypotheses (no network; committed fixture)
+          python scripts/kb_sync.py --source evals/kb/incidents --source evals/kb/cve --index /tmp/ih-kb.json
+          python scripts/kb_match.py --graph /tmp/ih-xray-evm-graph.json --index /tmp/ih-kb.json --min-score 0.3
+          # dispatch, bundle, hash, chain
+          python scripts/lens_dispatch.py --graph /tmp/ih-xray-evm-graph.json \
+            --actor a1 --actor a2 --output /tmp/ih-dispatch.json
+          python scripts/build_lens_bundle.py --dispatch /tmp/ih-dispatch.json --output-dir /tmp/ih-bundles
+          python scripts/evidence_manifest.py /tmp/ih-bundles --case-id eval-evm-001 \
+            --snapshot-id fixture-v1 --producer lens-bundler --output /tmp/ih-bundle-manifest.json
+          python scripts/chain_findings.py evals/evm/sample-findings.json --graph /tmp/ih-xray-evm-graph.json

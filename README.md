@@ -1,109 +1,87 @@
 # Invariant Helix
 
-Invariant Helix is an evidence-gated, graph-driven security-audit methodology and
-standard-library safety harness for authorized web applications, APIs,
-infrastructure, and smart-contract systems.
+An evidence-gated, graph-driven security-audit skill for authorized web apps, APIs,
+infrastructure, and smart contracts. It combines four things no single tool does at
+once:
 
-Its goal is not to promise omniscience. It makes tested paths, proof, independent
-falsification, unresolved assumptions, and coverage debt explicit—and it fails
-closed when scope, provenance, or execution limits are incomplete.
+- **Recall** — aggressive attacker lenses (12 contract + 5 web/infra) with concrete moves.
+- **Memory** — hypotheses grounded against a knowledge base of real exploits and CVEs.
+- **Real tools** — Scrapling, Burp-MCP, Foundry, recon CLIs, bound to capability names.
+- **Discipline** — G0–G9 gates, hashed evidence, and independent falsification decide
+  what is actually real on *this* target.
 
-## Core properties
+It does not promise omniscience. It makes tested paths, proof, independent
+falsification, unresolved assumptions, and coverage debt explicit, and fails closed when
+scope, provenance, or execution limits are incomplete.
 
-- authorization and target snapshots are established before active work;
-- observations, hypotheses, tests, findings, and refutations remain distinct;
-- a case/snapshot-scoped graph supports cross-path and cross-system reasoning;
-- high-impact paths require a specialist owner, negative control, and verifier;
-- material releases resolve every evidence reference and verify file digests;
-- active race requests are bounded by both the request spec and case manifest;
-- chain adapters preserve native semantics and disclose maturity gaps;
-- incomplete work ends as coverage debt, not a clean bill of health.
+## How it works (three lanes)
 
-## Repository map
+1. **Tool adapters** bind a real tool to one of 13 capability names; a missing tool
+   becomes coverage debt, never a silent gap (`ih-check-capabilities`).
+2. **Orchestration** dispatches only the lenses the graph justifies, each with an
+   independent verifier and a SHA-256-hashed bundle, then converges, scores (CVSS 3.1),
+   and reports — convergence raises priority/confidence, never status.
+3. **Knowledge base** grounds hypothesis generation (G5) against real history; every
+   match is a lead the gates must still prove.
+
+## Repository tree
 
 ```text
-SKILL.md                         normative controller instructions
-references/                      progressively loaded methodology
-schemas/*.schema.json            machine-readable interchange contracts
-schemas/*.md                     schema semantics and guidance
-adapters/                        web, chain, infrastructure, and harness mappings
-scripts/                         dependency-free validators and safe helpers
-tests/                           adversarial regression tests
-evals/                           synthetic end-to-end fixtures
+Invariant-Helix/
+├── SKILL.md              controller: G0–G9 gates + capability routing
+├── INSTALL.md            tiered install commands (core needs only Python)
+├── QUICKSTART.md         copy-paste end-to-end run
+├── references/           the methodology, grouped:
+│   ├── method/           gates, safety, coverage, evidence, graph, reporting, x-ray
+│   ├── lenses/           17 attacker lenses + shared-rules, SOP, nemesis-loop
+│   ├── web/              recon, toolchain, session model, auth logic, race testing
+│   ├── chains/           contract audit, neutral IR, invariants, property fuzzing
+│   └── knowledge/        incident patterns, CVE intel, knowledge base, integration
+├── adapters/             bind tools to capabilities:
+│   ├── web/              scrapling · burp-mcp · recon-cli · cve-intel · http · race
+│   ├── chains/           11 chain families + registry.json
+│   ├── fuzzing/          echidna-medusa · foundry-invariant · chain-native
+│   ├── audit/            pashov · nemesis skill bridges
+│   └── claude-code.md · codex.md · generic-cli.md
+├── scripts/              stdlib-only: validators + the new engine (x-ray, dispatch,
+│                         converge, cvss, chain, kb, capabilities, normalizers)
+├── schemas/              JSON contracts the validators enforce
+├── knowledge/            report templates + gitignored fetched corpus cache
+├── evals/                synthetic fixtures (web, evm, solana, kb)
+└── tests/                adversarial regression suite
 ```
 
 ## Quick start
 
-Python 3.10 or newer is required. The runtime scripts use only the standard
-library.
+Python 3.10+. `pip install -e .` exposes the `ih-*` commands. Full walk-through in
+[QUICKSTART.md](QUICKSTART.md); install tiers in [INSTALL.md](INSTALL.md).
 
 ```bash
-python scripts/inventory.py \
-  --scope evals/web/sample-scope.json \
-  --output /tmp/ih-inventory.json
-
-python scripts/normalize_observations.py \
-  evals/web/sample-observations.jsonl \
-  --output /tmp/ih-graph.json
-
-python scripts/evidence_manifest.py evals/web/evidence \
-  --verify evals/web/evidence-manifest.json
-
-python scripts/validate_findings.py evals/web/sample-findings.json \
-  --release \
-  --case-manifest evals/web/sample-scope.json \
-  --manifest evals/web/evidence-manifest.json \
-  --evidence-root evals/web/evidence
-
-python scripts/validate_coverage.py evals/web/sample-coverage.json \
-  --case-manifest evals/web/sample-scope.json \
-  --manifest evals/web/evidence-manifest.json
-
-python -m unittest discover -s tests -v
+pip install -e .
+python -m unittest discover -s tests -v          # all gates green
+ih-check-capabilities                            # what is installed vs blocked
+ih-xray-enumerate --scope evals/evm/sample-scope.json --root evals/evm --output /tmp/x.jsonl
+ih-normalize /tmp/x.jsonl --output /tmp/graph.json
+ih-lens-dispatch --graph /tmp/graph.json --actor a --actor b
 ```
-
-Installing the package exposes equivalent `ih-*` commands, including
-`ih-inventory`, `ih-normalize`, `ih-validate-findings`, and
-`ih-validate-coverage`.
-
-## Operating profiles
-
-Invariant Helix uses a role catalog rather than a fixed number of agents or
-processes. Start with scope, snapshot, discovery, graph, and coverage roles;
-activate web, infrastructure, or chain specialists only when the target graph
-and expected coverage gain justify them. Every high-impact path still needs an
-owner and an independent verifier, even when one operator performs roles
-sequentially.
-
-This risk-driven profile keeps small reviews efficient while allowing deeper
-specialist expansion for custody, authority, accounting, cross-domain messages,
-multi-tenant workflows, and other central paths.
 
 ## Active testing safety
 
-Passive/local analysis is the default. Active scans, fuzzing, race tests, OOB
-callbacks, and production-program reproductions require an explicit case
-manifest and capability admission.
-
-The bundled race runner:
-
-- compares canonical scheme, host, port, and path boundaries;
-- rejects userinfo, ambiguous encoded separators, routing override headers, and
-  scope look-alikes;
-- intersects its allowlist with validated case targets;
-- enforces case identity, expiry, actor, request, concurrency, capability, and
-  impact limits;
-- refuses real-fund execution because it cannot enforce monetary ceilings;
-- records client release timing without claiming simultaneous server execution;
-- requires prior sequential/negative controls and post-run reconciliation.
-
-No URL, RPC endpoint, repository, or source tree implies authorization.
+Passive/local analysis is the default. Active scans, fuzzing, race tests, OOB callbacks,
+and production reproductions require an explicit case manifest and capability admission.
+The bundled race runner enforces scope/identity/expiry/actor/concurrency/impact limits
+and refuses real-fund execution because it cannot enforce a monetary ceiling. No URL,
+RPC endpoint, repository, or source tree implies authorization.
 
 ## Project status
 
-Version 0.2 hardens the executable gates and adds adversarial regression tests.
-The repository remains a methodology and orchestration contract, not an exploit
-kit or a guarantee that every vulnerability will be found. Native adapter
-maturity and unavailable capabilities must remain visible in coverage debt.
+Version 0.3 adds the attacker-lens engine, executable x-ray, knowledge-base grounding,
+CVSS/kill-chain/reporting, and executable tool adapters — all behind the existing gates,
+with the adversarial regression suite extended to cover them. It remains a methodology
+and orchestration contract, not an exploit kit or a guarantee that every vulnerability
+will be found. Native adapter maturity and unavailable capabilities stay visible as
+coverage debt.
 
-See [SECURITY.md](SECURITY.md) for responsible use and security reports.
+See [SECURITY.md](SECURITY.md) for responsible use, and
+[references/knowledge/pashov-integration.md](references/knowledge/pashov-integration.md)
+for what was ported from pashov, bountyforge, and nemesis and how each maps to the gates.

@@ -1,0 +1,4 @@
+# Fetched corpora and generated index are never committed — fetch on demand with
+# `ih-kb-sync --fetch`. Keeps the repo lean and license-clean.
+cache/
+*.index.json
