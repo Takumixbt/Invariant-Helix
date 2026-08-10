@@ -26,6 +26,9 @@ NODE_KINDS = {
     "capability", "message", "oracle", "external_dependency", "event", "receipt",
     "invariant", "hypothesis", "test", "execution", "evidence", "finding",
     "coverage_item", "pattern", "cve",
+    # zero-knowledge circuits: a missing constraint is the bug, so signals and
+    # constraints are first-class graph nodes.
+    "circuit", "constraint", "signal", "witness",
 }
 RELATIONS = {
     "contains", "hosts", "serves", "redirects_to", "links_to", "loads", "calls", "sends",

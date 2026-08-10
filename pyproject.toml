@@ -36,6 +36,8 @@ ih-recon-normalize = "scripts.recon_to_obs:main"
 ih-solidity-analyze = "scripts.solidity_analyze:main"
 ih-loop = "scripts.audit_loop:main"
 ih-findings-ingest = "scripts.findings_ingest:main"
+ih-self-audit = "scripts.self_audit:main"
+ih-banner = "scripts.banner:main"
 
 [tool.setuptools]
 packages = ["scripts"]

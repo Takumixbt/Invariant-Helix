@@ -1,14 +1,34 @@
-# Invariant Helix
+```text
+██╗███╗   ██╗██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ███╗   ██╗████████╗
+██║████╗  ██║██║   ██║██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║╚══██╔══╝
+██║██╔██╗ ██║██║   ██║███████║██████╔╝██║███████║██╔██╗ ██║   ██║
+██║██║╚██╗██║╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██║╚██╗██║   ██║
+██║██║ ╚████║ ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██║ ╚████║   ██║
+╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝
+        ██╗  ██╗███████╗██╗     ██╗██╗  ██╗
+        ██║  ██║██╔════╝██║     ██║╚██╗██╔╝
+        ███████║█████╗  ██║     ██║ ╚███╔╝
+        ██╔══██║██╔══╝  ██║     ██║ ██╔██╗
+        ██║  ██║███████╗███████╗██║██╔╝ ██╗
+        ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝
+
+        evidence-gated  ·  graph-driven  ·  fails closed
+```
 
 An evidence-gated, graph-driven security-audit skill for authorized web apps, APIs,
-infrastructure, and smart contracts. It combines four things no single tool does at
-once:
+infrastructure, smart contracts, and ZK circuits. Run `ih-banner` to print this plus a
+live readiness readout of what your installation can actually do. It combines four
+things no single tool does at once:
 
-- **Recall** — aggressive attacker lenses (12 contract + 5 web/infra) with concrete moves.
-- **Memory** — hypotheses grounded against a knowledge base of real exploits and CVEs.
+- **Recall** — 22 attacker lenses (contract, accounting, web, infra, ZK) with concrete moves.
+- **Memory** — hypotheses grounded against real exploits, CVEs, and researcher findings.
 - **Real tools** — Scrapling, Burp-MCP, Foundry, recon CLIs, bound to capability names.
 - **Discipline** — G0–G9 gates, hashed evidence, and independent falsification decide
   what is actually real on *this* target.
+
+It is an **executable** skill, not a prompt pack: `ih-self-audit` mechanically verifies
+that every lens is dispatchable, every documented command resolves, and every claim the
+docs make matches what the validators enforce.
 
 It does not promise omniscience. It makes tested paths, proof, independent
 falsification, unresolved assumptions, and coverage debt explicit, and fails closed when
@@ -32,16 +52,17 @@ Invariant-Helix/
 ├── INSTALL.md            tiered install commands (core needs only Python)
 ├── QUICKSTART.md         copy-paste end-to-end run
 ├── references/           the methodology, grouped:
-│   ├── method/           gates, safety, coverage, evidence, graph, reporting, x-ray
-│   ├── lenses/           17 attacker lenses + shared-rules, SOP, nemesis-loop
+│   ├── method/           gates, safety, coverage, evidence, graph, reporting, x-ray,
+│   │                     money-map (model the value before hunting the bugs)
+│   ├── lenses/           22 attacker lenses + shared-rules, SOP, nemesis-loop
 │   ├── web/              recon, toolchain, session model, auth logic, race testing
 │   ├── chains/           contract audit, neutral IR, invariants, property fuzzing
 │   └── knowledge/        incident patterns, CVE intel, knowledge base, integration
 ├── adapters/             bind tools to capabilities:
 │   ├── web/              scrapling · burp-mcp · recon-cli · cve-intel · http · race
-│   ├── chains/           11 chain families + registry.json
+│   ├── chains/           12 families incl. zk-circuit + registry.json
 │   ├── fuzzing/          echidna-medusa · foundry-invariant · chain-native
-│   ├── audit/            pashov · nemesis skill bridges
+│   ├── audit/            pashov · nemesis bridges · peer-tools.json
 │   └── claude-code.md · codex.md · generic-cli.md
 ├── scripts/              stdlib-only: validators + the new engine (x-ray, dispatch,
 │                         converge, cvss, chain, kb, capabilities, normalizers)
@@ -58,8 +79,11 @@ Python 3.10+. `pip install -e .` exposes the `ih-*` commands. Full walk-through 
 
 ```bash
 pip install -e .
+ih-banner                                        # identity + live readiness
+ih-self-audit                                    # the skill checks its own wiring
 python -m unittest discover -s tests -v          # all gates green
 ih-check-capabilities                            # what is installed vs blocked
+ih-solidity-analyze --scope case.json --root src --output leads.jsonl   # located leads
 ih-xray-enumerate --scope evals/evm/sample-scope.json --root evals/evm --output /tmp/x.jsonl
 ih-normalize /tmp/x.jsonl --output /tmp/graph.json
 ih-lens-dispatch --graph /tmp/graph.json --actor a --actor b

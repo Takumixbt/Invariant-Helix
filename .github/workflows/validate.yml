@@ -28,6 +28,10 @@ jobs:
           python -c 'import glob,json; [json.load(open(path, encoding="utf-8")) for path in glob.glob("**/*.json", recursive=True)]'
       - name: Adversarial regression suite
         run: python -m unittest discover -s tests -v
+      - name: Skill self-audit (wiring, references, claims)
+        run: |
+          python scripts/banner.py --no-color
+          python scripts/self_audit.py
       - name: Validate chain adapter maturity registry
         run: python scripts/validate_adapters.py adapters/chains/registry.json
       - name: Validate scope and graph projection

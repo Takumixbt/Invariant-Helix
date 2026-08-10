@@ -59,6 +59,25 @@ def probe(capabilities: dict[str, dict[str, Any]] | None = None) -> dict[str, An
     return report
 
 
+def peer_tools(language: str | None = None, role: str | None = None) -> list[dict[str, Any]]:
+    """Peer audit tools that can supply a capability Invariant Helix lacks.
+
+    Distilled from the Web3 Security Tools Hub. A peer tool generates hypotheses; it never
+    adjudicates (see `independence_rule` in the registry).
+    """
+    registry_path = Path(__file__).resolve().parents[1] / "adapters/audit/peer-tools.json"
+    try:
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    tools = [tool for tool in registry.get("tools", []) if isinstance(tool, dict)]
+    if language:
+        tools = [t for t in tools if language in t.get("languages", []) or "multi" in t.get("languages", [])]
+    if role:
+        tools = [t for t in tools if role in t.get("roles", [])]
+    return tools
+
+
 def blocked_coverage_items(
     report: dict[str, Any],
     *,
@@ -67,15 +86,24 @@ def blocked_coverage_items(
     requested: list[str] | None = None,
     owner: str = "capability-planner",
     verifier: str = "independent-capability-verifier",
+    language: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Produce a blocked coverage item for every requested-but-unavailable capability."""
+    """Produce a blocked coverage item for every requested-but-unavailable capability.
+
+    Each item names the exact next requirement: the local tools that would supply the
+    capability, plus peer skills for the target language when one applies.
+    """
     wanted = set(requested) if requested else set(report)
+    role_for = {"property_fuzzing": "fuzzer", "source_analysis": "auditor"}
     items: list[dict[str, Any]] = []
     for name in sorted(wanted):
         detail = report.get(name)
         if detail is None or detail["available"]:
             continue
         candidates = ", ".join(detail["candidate_tools"]) or "an external harness"
+        peers = peer_tools(language, role_for.get(name)) if language else []
+        if peers:
+            candidates += "; peer skills: " + ", ".join(t["name"] for t in peers[:3])
         items.append(
             {
                 "coverage_id": f"coverage:capability-{name.replace('_', '-')}",
@@ -101,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case-manifest", type=Path, help="bind emitted coverage to this case/snapshot")
     parser.add_argument("--emit-blocked-coverage", type=Path, help="write blocked coverage items here")
+    parser.add_argument("--language", help="target language, to name peer skills for blocked capabilities")
     parser.add_argument("--json", action="store_true", help="print the full capability report as JSON")
     args = parser.parse_args(argv)
     try:
@@ -115,7 +144,10 @@ def main(argv: list[str] | None = None) -> int:
             allowed = case.get("allowed_capabilities")
             if isinstance(allowed, list) and allowed:
                 requested = [str(item) for item in allowed]
-        items = blocked_coverage_items(report, case_id=case_id, snapshot_id=snapshot_id, requested=requested)
+        items = blocked_coverage_items(
+            report, case_id=case_id, snapshot_id=snapshot_id, requested=requested,
+            language=args.language,
+        )
         if args.emit_blocked_coverage:
             payload = {
                 "schema_version": "1.0",

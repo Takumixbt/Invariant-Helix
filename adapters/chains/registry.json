@@ -292,6 +292,45 @@
         "no native execution or authority semantics",
         "cannot support complete chain-audit assurance"
       ]
+    },
+    {
+      "adapter_id": "zk-circuit",
+      "chain_family": "zk-circuit",
+      "status": "methodology-only",
+      "maturity_tier": 3,
+      "document": "adapters/chains/zk-circuit.md",
+      "detection_markers": [
+        "circom",
+        "pragma circom",
+        "template ",
+        "Noir",
+        "halo2",
+        "nargo",
+        "signal input"
+      ],
+      "enumeration_strategy": "enumerate templates, components, public/private signals, constraints and the verifier binding",
+      "authority_model": "the prover chooses the witness; only constraints restrict it, and the on-chain verifier binds public inputs",
+      "state_model": "signals over a prime field, constraint system, public inputs and the proving/verifying key pair",
+      "trace_strategy": "witness generation trace with per-signal assignment and the constraint each signal participates in",
+      "simulation_strategy": "local witness generation plus constraint-count and satisfiability checks against a malicious witness",
+      "property_strategy": "soundness (no false statement provable), completeness (every true statement provable), and privacy of designated signals",
+      "reproduction_format": "circuit source, input.json witness, generated proof, public signals and the verifier result",
+      "known_gaps": [
+        "no bundled circom/halo2 toolchain or formal constraint checker",
+        "soundness gaps require reasoning about the constraint system, not lexical analysis",
+        "trusted-setup and verifying-key provenance must be validated out of band"
+      ],
+      "entry_point_patterns": {
+        "circom": [
+          "template[[:space:]]+[[:alnum:]_]+",
+          "signal[[:space:]]+(input|output)",
+          "component[[:space:]]+main"
+        ],
+        "noir": [
+          "fn[[:space:]]+main",
+          "unconstrained[[:space:]]+fn"
+        ]
+      }
     }
   ]
 }

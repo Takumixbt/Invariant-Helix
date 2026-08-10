@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "description": "Peer audit tools by language and role, distilled from the Web3 Security Tools Hub (github.com/pashov/ai-web3-security). Invariant Helix cites these when a capability is unavailable or when an independent second opinion strengthens verifier independence. IH does not bundle, execute, or endorse them; each stays under its own license and its output enters IH as a hypothesis, never a finding.",
+  "source": "https://github.com/pashov/ai-web3-security",
+  "roles": {
+    "auditor": "generates vulnerability hypotheses from source",
+    "static-analyzer": "deterministic pattern/dataflow analysis",
+    "fuzzer": "property or coverage-guided input generation",
+    "scoping": "pre-audit modelling and threat surface enumeration",
+    "judge": "scores, dedups, or triages findings",
+    "known-findings": "checks a candidate against already-disclosed issues",
+    "guardrails": "secure-development assistance while writing code"
+  },
+  "tools": [
+    {"name": "pashov/skills", "url": "https://github.com/pashov/skills", "languages": ["solidity"], "roles": ["auditor"], "note": "multi-pass audit; ported into references/lenses/"},
+    {"name": "0xsimao/0xsimao-ai", "url": "https://github.com/0xsimao/0xsimao-ai", "languages": ["solidity"], "roles": ["auditor"], "note": "accounting-first; informs references/method/money-map.md and the value lenses"},
+    {"name": "0xiehnnkta/nemesis-auditor", "url": "https://github.com/0xiehnnkta/nemesis-auditor", "languages": ["solidity", "move", "rust", "go", "typescript"], "roles": ["auditor"], "note": "alternating loop; see references/lenses/nemesis-loop.md"},
+    {"name": "GPTScan", "url": "https://github.com/GPTScan/GPTScan", "languages": ["solidity"], "roles": ["auditor", "static-analyzer"]},
+    {"name": "slvDev/weasel", "url": "https://github.com/slvDev/weasel", "languages": ["solidity"], "roles": ["static-analyzer"]},
+    {"name": "kadenzipfel/scv-scan", "url": "https://github.com/kadenzipfel/scv-scan", "languages": ["solidity"], "roles": ["static-analyzer"]},
+    {"name": "Cyfrin/solskill", "url": "https://github.com/Cyfrin/solskill", "languages": ["solidity"], "roles": ["guardrails"]},
+    {"name": "OpenZeppelin/openzeppelin-skills", "url": "https://github.com/OpenZeppelin/openzeppelin-skills", "languages": ["solidity"], "roles": ["guardrails"]},
+    {"name": "trailofbits/skills", "url": "https://github.com/trailofbits/skills", "languages": ["solidity", "rust", "multi"], "roles": ["guardrails", "fuzzer"]},
+    {"name": "cholakovvv/foundry-poc-mainnet-fork", "url": "https://github.com/cholakovvv/foundry-poc-mainnet-fork", "languages": ["solidity"], "roles": ["fuzzer"], "note": "generates fork PoCs; useful for G6 reproduction"},
+    {"name": "Frankcastleauditor/safe-solana-builder", "url": "https://github.com/Frankcastleauditor/safe-solana-builder", "languages": ["rust-solana"], "roles": ["guardrails"]},
+    {"name": "zzzuhaibmohd/solana-token-extensions-security", "url": "https://github.com/zzzuhaibmohd/solana-token-extensions-security", "languages": ["rust-solana"], "roles": ["auditor"], "note": "Token-2022 extension specifics"},
+    {"name": "han-sec/trident-fuzz-skill", "url": "https://github.com/han-sec/trident-fuzz-skill", "languages": ["rust-solana"], "roles": ["fuzzer"], "note": "backs property_fuzzing on Solana"},
+    {"name": "exvulsec/sui-move-skill", "url": "https://github.com/exvulsec/sui-move-skill", "languages": ["move"], "roles": ["auditor"]},
+    {"name": "pantheraudits/move-auditor", "url": "https://github.com/pantheraudits/move-auditor/", "languages": ["move"], "roles": ["auditor"]},
+    {"name": "sanbir/move-auditor-skills", "url": "https://github.com/sanbir/move-auditor-skills", "languages": ["move"], "roles": ["auditor"]},
+    {"name": "kaveyjoe/SUIZERO", "url": "https://github.com/kaveyjoe/SUIZERO", "languages": ["move"], "roles": ["auditor"]},
+    {"name": "zksecurity/zk-skills", "url": "https://github.com/zksecurity/zk-skills", "languages": ["circom", "zk"], "roles": ["auditor"], "note": "soundness/completeness/constraint review; pairs with references/lenses/zk-circuit.md"},
+    {"name": "0xRayaa/scoping-bee", "url": "https://github.com/0xRayaa/scoping-bee", "languages": ["multi"], "roles": ["scoping"]},
+    {"name": "heavyw8t/The-Judge", "url": "https://github.com/heavyw8t/The-Judge", "languages": ["multi"], "roles": ["judge"], "note": "an external judge is NOT an IH verifier; see the independence rule below"},
+    {"name": "J4X-Security/K.I.T", "url": "https://github.com/J4X-Security/K.I.T", "languages": ["multi"], "roles": ["known-findings"], "note": "dedup a candidate against disclosed issues before release"},
+    {"name": "digger-determsec/digger", "url": "https://github.com/digger-determsec/digger", "languages": ["multi"], "roles": ["auditor", "static-analyzer"], "note": "evidence-gated analyzer; closest peer in philosophy"},
+    {"name": "scabench-org/hound", "url": "https://github.com/scabench-org/hound", "languages": ["multi"], "roles": ["auditor"]},
+    {"name": "JoranHonig/grimoire", "url": "https://github.com/JoranHonig/grimoire", "languages": ["multi"], "roles": ["auditor"]},
+    {"name": "hackenproof-public/skills", "url": "https://github.com/hackenproof-public/skills", "languages": ["multi"], "roles": ["judge"], "note": "bug-bounty triage"}
+  ],
+  "independence_rule": "A peer tool may generate hypotheses or supply a capability Invariant Helix lacks. It may NOT serve as the independent verifier for a finding it produced, and its confidence or verdict never sets IH status: output enters at `hypothesis` and must pass G8 falsification by a distinct actor. Agreement between IH and a peer tool that shares a premise is not independent verification."
+}

@@ -65,6 +65,10 @@ Preserve chain-native, case-sensitive identifiers.
 
 ### G3 — Model
 
+Build the money map first (`references/method/money-map.md`): assets, tracked totals,
+invariants as equations, and actor cohorts. Most high-severity findings are a tracked
+total diverging from reality, so model the value before hunting the code.
+
 Create the typed graph and any native intermediate representation. Every node
 and edge needs a locator or evidence reference. Reject dangling endpoints,
 mixed cases/snapshots, and silent identity conflicts.
@@ -203,12 +207,14 @@ and verification references for every case. Then load only relevant mode files:
   method/coverage-and-termination.md, method/evidence-and-triage.md,
   method/graph-engineering.md, method/agent-coordination.md,
   method/verification-and-falsification.md, method/requirements.md,
-  method/reporting.md, method/xray.md, method/infrastructure-audit.md
+  method/reporting.md, method/xray.md, method/money-map.md,
+  method/infrastructure-audit.md
 - lenses/shared-rules.md, lenses/auditor-sop.md, lenses/nemesis-loop.md, and the
-  17 lens profiles (access-control, math-precision, economic, execution-trace,
+  22 lens profiles (access-control, math-precision, economic, execution-trace,
   invariant-state, periphery-integration, first-principles, asymmetry, boundary,
-  numerical-gap, trust-gap, flow-gap, web-api, auth-session, recon-infra,
-  credential-leak, race-condition)
+  numerical-gap, trust-gap, flow-gap, share-exchange-rate, temporal-cohort,
+  liquidation-solvency, cross-chain-state, zk-circuit, web-api, auth-session,
+  recon-infra, credential-leak, race-condition)
 - web/web-recon.md, web/web-toolchain.md, web/browser-and-session-model.md,
   web/auth-and-business-logic.md, web/race-testing.md
 - chains/smart-contract-audit.md, chains/chain-neutral-ir.md, chains/chain-adapters.md,
