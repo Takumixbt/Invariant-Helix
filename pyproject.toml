@@ -34,6 +34,8 @@ ih-kb-match = "scripts.kb_match:main"
 ih-scrapling-normalize = "scripts.scrapling_to_obs:main"
 ih-recon-normalize = "scripts.recon_to_obs:main"
 ih-solidity-analyze = "scripts.solidity_analyze:main"
+ih-loop = "scripts.audit_loop:main"
+ih-findings-ingest = "scripts.findings_ingest:main"
 
 [tool.setuptools]
 packages = ["scripts"]

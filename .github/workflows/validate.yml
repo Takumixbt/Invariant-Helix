@@ -112,3 +112,8 @@ jobs:
               --scope evals/web/sample-scope.json --output "/tmp/ih-crawl-$f.jsonl"
             python scripts/normalize_observations.py "/tmp/ih-crawl-$f.jsonl" --output "/tmp/ih-crawl-$f.json"
           done
+          # researcher findings ingest -> knowledge base -> grounded leads
+          python scripts/findings_ingest.py evals/kb/findings \
+            --source fixture-findings --output /tmp/ih-findings.json
+          python scripts/kb_match.py --graph /tmp/ih-sol-graph.json \
+            --index /tmp/ih-findings.json --min-score 0.3

@@ -175,6 +175,18 @@ builds each lens a deterministic bundle; `ih-evidence` hashes it so a lens findi
 `ih-kb-match` against the knowledge base — a match is a lead, never a finding. Convergence
 (`ih-converge`) raises priority and confidence, never status.
 
+## Iterate until convergence, not until bored (G5–G8)
+
+Audit in alternating passes with `ih-loop`: a first-principles branch and a
+state/invariant branch, each receiving the other's **evidence and questions but never
+its verdict**. Every pass emits a delta (new facts, hypotheses, refutations); a cleared
+coverage item whose dependencies the delta touched is reopened automatically.
+
+The loop stops on a reasoned condition, never a fixed count. Two quiet passes with no
+open material gap converge to `complete`; two quiet passes while a critical/high gap is
+still open terminate **`inconclusive`** — silence is not coverage. An exhausted pass
+budget while still producing new material is also `inconclusive`, not success.
+
 ## Scoring and release (G9)
 
 Score released findings with `ih-cvss` (the band must match `severity`). Compose

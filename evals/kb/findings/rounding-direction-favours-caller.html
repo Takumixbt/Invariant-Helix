@@ -1,0 +1,13 @@
+<!doctype html><html><head><title>Findings</title><style>.x{}</style></head><body>
+<nav><a href="/">home</a></nav>
+<h1>Rounding direction on withdrawal favours the caller</h1>
+<p>Severity: High. The vault computes shares to burn on withdrawal using a division that
+rounds down, while the assets returned round up. An attacker repeatedly withdraws the
+smallest non-zero amount, each time burning one fewer share than the accounting requires.
+Over many iterations the share price is dragged down and the residual depositors absorb
+the loss. Root cause: the rounding direction is not inverted between the deposit and
+withdraw paths, so the protocol rounds in the user's favour on both sides.</p>
+<p>Recommendation: round shares up on withdrawal, mirroring the deposit path.</p>
+<a href="https://example.test/report/1">full report</a>
+<script>console.log('should be discarded')</script>
+</body></html>
