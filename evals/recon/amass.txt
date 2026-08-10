@@ -1,0 +1,4 @@
+app.example.test
+api.example.test
+staging.example.test
+not a hostname line

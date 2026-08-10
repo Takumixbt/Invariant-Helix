@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 from scripts.chain_findings import build_chains
-from scripts.recon_to_obs import normalize as recon_normalize
-from scripts.scrapling_to_obs import normalize as scrapling_normalize
+from scripts.recon_to_obs import detect_and_parse as recon_parse
+from scripts.scrapling_to_obs import detect_and_parse as crawl_parse
 from scripts.xray_enumerate import detect_family, enumerate_codebase, posix_to_python
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,14 +39,16 @@ class XrayEnumerateTests(unittest.TestCase):
 
 
 class NormalizerTests(unittest.TestCase):
-    def test_scrapling_export_becomes_route_nodes(self) -> None:
-        export = {"routes": [{"url": "/api/profile", "method": "get", "params": ["user_id"]}]}
-        records = scrapling_normalize(export, "c", "s")
+    """Smoke coverage; the real-format parsers are exercised in depth by
+    tests/test_recon_parsers.py and tests/test_crawl_parsers.py."""
+
+    def test_crawl_export_becomes_route_nodes(self) -> None:
+        _, records = crawl_parse('{"routes":[{"url":"https://app.example.test/api/profile","method":"get"}]}')
         self.assertEqual(records[0]["kind"], "route")
         self.assertEqual(records[0]["status"], "observed")
 
     def test_recon_export_becomes_host_nodes(self) -> None:
-        records = recon_normalize({"hosts": ["app.example.test"]}, "c", "s")
+        _, records = recon_parse("app.example.test\n")
         self.assertEqual(records[0]["kind"], "host")
 
 

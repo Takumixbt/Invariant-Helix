@@ -95,3 +95,20 @@ jobs:
           python scripts/evidence_manifest.py /tmp/ih-bundles --case-id eval-evm-001 \
             --snapshot-id fixture-v1 --producer lens-bundler --output /tmp/ih-bundle-manifest.json
           python scripts/chain_findings.py evals/evm/sample-findings.json --graph /tmp/ih-xray-evm-graph.json
+      - name: Validate analyzers against real tool formats
+        run: |
+          # Solidity analyzer must find every planted bug in the vulnerable fixture
+          python scripts/solidity_analyze.py --scope evals/evm/sample-scope.json \
+            --root evals/evm --output /tmp/ih-sol.jsonl
+          python scripts/normalize_observations.py /tmp/ih-sol.jsonl --output /tmp/ih-sol-graph.json
+          # recon + crawl parsers against real nmap/httpx/ffuf/gobuster/HAR/Burp output
+          for f in nmap.xml httpx.jsonl ffuf.json gobuster.txt amass.txt; do
+            python scripts/recon_to_obs.py "evals/recon/$f" \
+              --scope evals/web/sample-scope.json --output "/tmp/ih-recon-$f.jsonl"
+            python scripts/normalize_observations.py "/tmp/ih-recon-$f.jsonl" --output "/tmp/ih-recon-$f.json"
+          done
+          for f in crawl.har burp-sitemap.json; do
+            python scripts/scrapling_to_obs.py "evals/recon/$f" \
+              --scope evals/web/sample-scope.json --output "/tmp/ih-crawl-$f.jsonl"
+            python scripts/normalize_observations.py "/tmp/ih-crawl-$f.jsonl" --output "/tmp/ih-crawl-$f.json"
+          done

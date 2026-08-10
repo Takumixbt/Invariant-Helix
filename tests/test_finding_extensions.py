@@ -44,13 +44,42 @@ class FindingExtensionTests(unittest.TestCase):
         finding = _finding()
         finding["convergence"] = {"agreement": 3, "implies_status": "verified"}
         errors = validate([finding], release=False)
-        self.assertTrue(any("convergence must not imply" in e for e in errors))
+        self.assertTrue(any("adjudicated status" in e for e in errors))
+
+    def test_convergence_cannot_evade_by_renaming_the_key(self) -> None:
+        # The rule must hold under ANY key, or it is trivially bypassed.
+        for key in ("verdict", "outcome", "result", "status"):
+            finding = _finding()
+            finding["convergence"] = {"agreement": 9, key: "verified"}
+            errors = validate([finding], release=False)
+            self.assertTrue(
+                any("adjudicated status" in e for e in errors), f"key {key!r} evaded the check"
+            )
 
     def test_chain_of_unreleasable_parent_is_rejected(self) -> None:
         finding = _finding()
         finding["chain_of"] = ["finding-does-not-exist"]
         errors = validate([finding], release=False)
         self.assertTrue(any("chain_of parents are not releasable" in e for e in errors))
+
+    def test_chain_of_cannot_reference_itself(self) -> None:
+        finding = _finding()
+        finding["chain_of"] = [finding["finding_id"]]
+        errors = validate([finding], release=False)
+        self.assertTrue(any("must not reference the finding itself" in e for e in errors))
+
+    def test_cvss_base_score_cannot_contradict_its_vector(self) -> None:
+        finding = _finding()
+        finding["severity"] = "critical"
+        finding["cvss"] = {"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "base_score": 1.0}
+        errors = validate([finding], release=False)
+        self.assertTrue(any("contradicts the vector" in e for e in errors))
+
+    def test_orphan_bundle_digest_without_lens_is_rejected(self) -> None:
+        finding = _finding()
+        finding["bundle_digest"] = "sha256:orphan"
+        errors = validate([finding], release=False)
+        self.assertTrue(any("requires the lens" in e for e in errors))
 
 
 if __name__ == "__main__":

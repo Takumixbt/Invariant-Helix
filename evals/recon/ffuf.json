@@ -1,0 +1,1 @@
+{"commandline":"ffuf -w list -u https://app.example.test/FUZZ -of json","time":"2026-01-01T00:00:00Z","results":[{"input":{"FUZZ":"admin"},"position":1,"status":301,"length":169,"words":5,"lines":8,"url":"https://app.example.test/admin"},{"input":{"FUZZ":"api"},"position":2,"status":200,"length":4021,"words":210,"lines":90,"url":"https://app.example.test/api"}]}

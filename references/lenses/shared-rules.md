@@ -30,6 +30,31 @@ When you find a bug in one place, grep every sibling for the same function name 
 code shape. Escalate each hit to its worst exploitable variant and revisit every
 affected path. One bug class usually recurs.
 
+## Start from the machine's leads
+
+Before reading a line yourself, run the analyzers — they hand you concrete, located
+starting points so you spend your effort on exploitation, not enumeration:
+
+```bash
+ih-solidity-analyze --scope case.json --root src --output leads.jsonl   # contract
+ih-recon-normalize nmap.xml --scope case.json --output recon.jsonl      # infra
+ih-scrapling-normalize crawl.har --scope case.json --output web.jsonl   # web
+ih-kb-match --graph graph.json --index kb.json                          # history
+```
+
+Each lead arrives tagged with `bug_class`, `lens`, and a `file:line`. **Your job is not
+to re-find them — it is to prove or kill each one, then go find what the analyzer
+cannot see:** economic logic, cross-contract composition, business-workflow abuse, and
+multi-step sequences. A lexical analyzer cannot reason; you can.
+
+## Push past "looks fine"
+
+The most common failure is stopping at a guard that appears sufficient. Do not
+write off a path until you have written down three concrete attacker moves against it
+with real addresses, values, and state (the Inversion marker). "I could not find a way"
+is a recorded result with a reason, not a silent skip. Equally: never inflate. A path
+you could not break is `refuted` or `inconclusive`, never quietly dropped.
+
 ## FINDING vs LEAD
 
 - **FINDING** — a concrete exploitable path with a proof field: specific values, a
@@ -37,7 +62,8 @@ affected path. One bug class usually recurs.
 - **LEAD** — a code smell or partial path with no proof. Enters IH as a `hypothesized`
   observation, or a coverage item, never a finding.
 
-A knowledge-base match (`kb_match`) is always a LEAD until a lens proves reachability.
+A knowledge-base match (`kb_match`) and an analyzer lead are always LEADs until a lens
+proves reachability. Promotion is earned by proof, never by agreement or by volume.
 
 ## Output contract
 

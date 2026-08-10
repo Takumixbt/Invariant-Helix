@@ -1,0 +1,1 @@
+{"items":[{"url":"https://app.example.test/login","method":"POST","status":200,"mime_type":"HTML"},{"url":"https://app.example.test/api/v1/users","method":"GET","status":401,"mime_type":"JSON"}]}

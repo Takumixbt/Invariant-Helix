@@ -44,6 +44,9 @@ STATUSES = {
     "inconclusive", "released",
 }
 RELEASABLE = {"verified", "downgraded"}
+# Statuses that only adjudication may confer. Nothing self-reported (convergence,
+# knowledge-base agreement, a lens's own opinion) may claim one of these.
+ADJUDICATED = {"verified", "released", "downgraded", "true_positive"}
 PROOF_LEVELS = {"P0", "P1", "P2", "P3", "P4"}
 VERDICTS = {"TRUE_POSITIVE", "FALSE_POSITIVE", "DOWNGRADED", "DUPLICATE", "INCONCLUSIVE"}
 CONFIDENCE_LEVELS = {"low", "medium", "high"}
@@ -166,6 +169,17 @@ def _validate_cvss(value: Any, finding: dict[str, Any], prefix: str, errors: lis
             f"{prefix} cvss band {scored['severity_band']} maps to {scored['ih_severity']} "
             f"but severity is {severity}"
         )
+    # A self-reported score may not contradict the vector it claims to summarize.
+    if isinstance(value, dict) and "base_score" in value:
+        try:
+            claimed = float(value["base_score"])
+        except (TypeError, ValueError):
+            errors.append(f"{prefix} cvss base_score must be numeric")
+            return
+        if abs(claimed - scored["base_score"]) > 0.05:
+            errors.append(
+                f"{prefix} cvss base_score {claimed} contradicts the vector ({scored['base_score']})"
+            )
 
 
 def _validate_extensions(
@@ -176,6 +190,7 @@ def _validate_extensions(
     content_digests: set[str],
     manifest_present: bool,
     releasable_ids: set[str],
+    release: bool,
 ) -> None:
     """Validate the lens/knowledge-base/convergence/kill-chain extension fields."""
     if "cvss" in finding:
@@ -190,12 +205,26 @@ def _validate_extensions(
             errors.append(f"{prefix} lens finding requires a bundle_digest")
         elif manifest_present and bundle_digest not in content_digests:
             errors.append(f"{prefix} bundle_digest does not resolve to a manifest artifact")
+        elif release and not manifest_present:
+            # Releasing a lens finding without a manifest would leave its input
+            # unverifiable; the digest must be resolvable at release time.
+            errors.append(f"{prefix} releasing a lens finding requires an evidence manifest")
+    elif bundle_digest is not None:
+        errors.append(f"{prefix} bundle_digest requires the lens that produced it")
     convergence = finding.get("convergence")
     if convergence is not None:
         if not isinstance(convergence, dict):
             errors.append(f"{prefix} convergence must be an object")
-        elif str(convergence.get("implies_status", "")).lower() in {"verified", "released", "downgraded"}:
-            errors.append(f"{prefix} convergence must not imply a verified/released status")
+        else:
+            # Agreement may set priority/confidence, never status. Reject a claim of a
+            # verified/released/downgraded outcome under ANY key, not one named field --
+            # otherwise the rule is trivially evaded by renaming the key.
+            for key, value in convergence.items():
+                if isinstance(value, str) and value.strip().lower() in ADJUDICATED:
+                    errors.append(
+                        f"{prefix} convergence.{key} claims an adjudicated status "
+                        f"({value}); agreement may not imply verification"
+                    )
     kb_refs = finding.get("kb_refs")
     if kb_refs is not None and not _string_list(kb_refs):
         errors.append(f"{prefix} kb_refs must be a non-empty array of strings")
@@ -204,7 +233,12 @@ def _validate_extensions(
         if not _string_list(chain_of):
             errors.append(f"{prefix} chain_of must be a non-empty array of finding ids")
         else:
-            unresolved = [ref for ref in chain_of if ref not in releasable_ids]
+            own_id = str(finding.get("finding_id"))
+            if own_id in chain_of:
+                errors.append(f"{prefix} chain_of must not reference the finding itself")
+            if len(set(chain_of)) != len(chain_of):
+                errors.append(f"{prefix} chain_of contains duplicate parents")
+            unresolved = [ref for ref in chain_of if ref not in releasable_ids and ref != own_id]
             if unresolved:
                 errors.append(f"{prefix} chain_of parents are not releasable: {', '.join(sorted(unresolved))}")
 
@@ -287,6 +321,7 @@ def validate(
             content_digests={str(digest) for digest in content_digests if digest},
             manifest_present=manifest is not None,
             releasable_ids=releasable_ids,
+            release=release,
         )
         if proof_level == "P4" and finding.get("falsification_result", {}).get("independent_reproduction") is not True:
             errors.append(f"{prefix} P4 requires independent reproduction")

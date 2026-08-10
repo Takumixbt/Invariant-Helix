@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -25,6 +26,26 @@ STATUSES = {"planned", "in_progress", "tested", "verified", "refuted", "blocked"
 TERMINATIONS = {"complete", "complete_with_limitations", "inconclusive", "blocked", "aborted"}
 CLOSED = {"tested", "verified", "refuted", "excluded"}
 GAPS = {"planned", "in_progress", "blocked", "uncovered", "stale"}
+EXERCISED = {"tested", "verified", "refuted"}
+# "excluded" means the path is outside the engagement -- a scope or authorization fact.
+# It must never be used to launder work that was simply not done: a path skipped for
+# time, effort, difficulty, or a missing tool is `blocked`/`uncovered` (coverage debt),
+# because only those keep it visible in the debt summary.
+EXCLUSION_LAUNDERING = re.compile(
+    r"\b(time|deadline|rush|later|effort|budget|hard|difficult|complex|complicated|"
+    r"skip|skipped|too\s+many|no\s+time|ran\s+out|unable\s+to\s+test|not\s+enough|"
+    r"tool|tooling|capability|unavailable|missing|no\s+access|couldn'?t|could\s+not|"
+    r"tbd|todo|later)\b",
+    re.IGNORECASE,
+)
+# A legitimate exclusion cites the engagement boundary.
+EXCLUSION_GROUNDS = re.compile(
+    r"\b(out\s+of\s+scope|not\s+in\s+scope|outside\s+scope|excluded\s+by|deny|denied|"
+    r"prohibited|unauthoriz|not\s+authoriz|third[- ]party|owned\s+by|program\s+rules|"
+    r"rules\s+of\s+engagement|roe|contract(?:ual)?|legal|duplicate\s+of|"
+    r"not\s+applicable|n/a\b|does\s+not\s+exist|superseded)\b",
+    re.IGNORECASE,
+)
 REQUIRED_ITEM_FIELDS = {
     "coverage_id", "case_id", "snapshot_id", "target_refs", "impact_class", "owner",
     "hypothesis_families", "planned_observations", "negative_controls", "verifier_id", "status",
@@ -112,14 +133,45 @@ def validate(
             errors.append(f"{prefix} closed status requires evidence_refs")
         if status == "blocked" and not _nonempty(item.get("blocker")):
             errors.append(f"{prefix} blocked status requires blocker")
-        if status == "excluded" and not _nonempty(item.get("exclusion_reason")):
-            errors.append(f"{prefix} excluded status requires exclusion_reason")
+        if status == "excluded":
+            reason = item.get("exclusion_reason")
+            if not _nonempty(reason):
+                errors.append(f"{prefix} excluded status requires exclusion_reason")
+            else:
+                text = str(reason)
+                if EXCLUSION_LAUNDERING.search(text) and not EXCLUSION_GROUNDS.search(text):
+                    errors.append(
+                        f"{prefix} exclusion_reason describes work not done, not an "
+                        f"engagement boundary: use status=blocked or uncovered so it "
+                        f"stays visible as coverage debt ({text.strip()[:80]!r})"
+                    )
+                elif not EXCLUSION_GROUNDS.search(text) and impact in {"critical", "high"}:
+                    errors.append(
+                        f"{prefix} excluding a {impact}-impact path requires an explicit "
+                        f"scope/authorization ground in exclusion_reason ({text.strip()[:80]!r})"
+                    )
         if manifest:
             unresolved = sorted(set(item.get("evidence_refs", [])) - artifact_ids)
             if unresolved:
                 errors.append(f"{prefix} unresolved evidence_refs: {', '.join(unresolved)}")
     if termination == "complete" and any(item.get("status") not in CLOSED for item in items):
         errors.append("complete requires every coverage item to be closed")
+    if termination in {"complete", "complete_with_limitations"}:
+        # A termination claiming completeness must rest on work actually performed.
+        # If nothing was exercised, "complete" would assert a clean bill of health for
+        # an audit that tested nothing -- the exact outcome this project exists to refuse.
+        exercised = [item for item in items if item.get("status") in EXERCISED]
+        if not exercised:
+            errors.append(
+                f"{termination} requires at least one tested/verified/refuted item; "
+                "an all-excluded or all-blocked bundle is inconclusive, not complete"
+            )
+        material = [item for item in items if item.get("impact_class") in {"critical", "high"}]
+        if material and not any(item.get("status") in EXERCISED for item in material):
+            errors.append(
+                f"{termination} cannot be claimed while no critical/high path was "
+                "exercised; report inconclusive with the coverage debt instead"
+            )
     if termination == "complete_with_limitations":
         material_gaps = [
             item["coverage_id"]

@@ -1,5 +1,25 @@
 # Coverage and termination
 
+## Exclusion is a scope fact, not a place to hide unfinished work
+
+`excluded` asserts that a path lies **outside the engagement** — out of scope, denied by
+the rules of engagement, third-party owned, not applicable. It is the one closed status
+that requires no evidence, which is exactly why it is the easiest way to fake a clean
+audit.
+
+A path you did not test because you ran out of time, lacked a tool, or found it too
+difficult is **`blocked`** (name the blocker) or **`uncovered`** — never `excluded`.
+Only those statuses keep it visible in `coverage_debt_by_impact`.
+
+`validate_coverage` enforces this: an `exclusion_reason` that describes work not done
+(time, effort, difficulty, missing tooling) is rejected unless it also cites an
+engagement boundary, and excluding a critical/high path requires explicit
+scope/authorization grounds. A `complete` or `complete_with_limitations` termination
+additionally requires that at least one item — and at least one critical/high item —
+was actually exercised (`tested`/`verified`/`refuted`). An audit that tested nothing
+terminates `inconclusive`, with its debt intact.
+
+
 An audit ends when its coverage obligations are satisfied or honestly blocked,
 not when the agents stop generating text.
 

@@ -1,0 +1,2 @@
+{"timestamp":"2026-01-01T00:00:00Z","url":"https://app.example.test","input":"app.example.test","host":"127.0.0.1","port":"443","status_code":200,"title":"Example App","webserver":"nginx","tech":["Nginx","React"]}
+{"timestamp":"2026-01-01T00:00:01Z","url":"https://api.example.test/v1","input":"api.example.test","host":"127.0.0.1","port":"443","status_code":401,"title":"Unauthorized","webserver":"nginx","tech":["Nginx"]}

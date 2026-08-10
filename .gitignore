@@ -16,5 +16,9 @@ observations/
 reports/
 secrets/
 *.pcap
+# HAR captures from real engagements carry full request/response bodies (cookies,
+# tokens, PII), so they are ignored by default. The synthetic parser fixture under
+# evals/ is the sole exception and contains no real data.
 *.har
+!evals/recon/*.har
 .DS_Store
