@@ -13,7 +13,7 @@
         ██╔══██║██╔══╝  ██║     ██║ ██╔██╗
         ██║  ██║███████╗███████╗██║██╔╝ ██╗
         ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝
-  evidence-gated  ·  graph-driven  ·  fails closed
+        evidence-gated  ·  graph-driven  
 ```
 
 **One methodology.** Web, API, infra, smart contracts — same gates, same graph, same evidence rules.
