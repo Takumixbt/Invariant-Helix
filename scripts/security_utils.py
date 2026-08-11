@@ -6,6 +6,7 @@ import ipaddress
 import os
 import posixpath
 import re
+import socket
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,26 @@ SENSITIVE_QUERY_KEYS = {
     "key",
     "password",
     "refresh_token",
+    "secret",
+    "session",
+    "sig",
+    "signature",
+    "token",
+}
+SENSITIVE_QUERY_PARTS = {
+    "access",
+    "api",
+    "auth",
+    "authorization",
+    "code",
+    "cookie",
+    "credential",
+    "csrf",
+    "jwt",
+    "key",
+    "password",
+    "passwd",
+    "refresh",
     "secret",
     "session",
     "sig",
@@ -71,13 +92,17 @@ class ParsedHttpTarget:
 
 def _canonical_path(path: str) -> str:
     decoded = path
-    for _ in range(3):
+    for _ in range(16):
         if ENCODED_PATH_META.search(decoded):
             raise ValueError("URL path contains an ambiguous encoded dot or separator")
         expanded = unquote(decoded)
         if expanded == decoded:
             break
         decoded = expanded
+    else:
+        raise ValueError("URL path contains too many encoding layers")
+    if ENCODED_PATH_META.search(decoded):
+        raise ValueError("URL path contains an ambiguous encoded dot or separator")
     if "\\" in decoded:
         raise ValueError("URL path contains a backslash separator")
     path = decoded or "/"
@@ -106,11 +131,13 @@ def parse_http_target(value: str, *, allow_query: bool = True) -> ParsedHttpTarg
         raise ValueError("URL fragments are not allowed")
     try:
         host = parsed.hostname.rstrip(".").encode("idna").decode("ascii").lower()
-        port = parsed.port or (443 if scheme == "https" else 80)
+        port = parsed.port if parsed.port is not None else (443 if scheme == "https" else 80)
     except (UnicodeError, ValueError) as exc:
         raise ValueError(f"invalid URL host or port: {exc}") from exc
     if not host:
         raise ValueError("URL host is empty")
+    if not 1 <= port <= 65535:
+        raise ValueError("URL port must be between 1 and 65535")
     path = _canonical_path(parsed.path)
     query = parsed.query if allow_query else ""
     return ParsedHttpTarget(scheme=scheme, host=host, port=port, path=path, query=query)
@@ -151,6 +178,94 @@ def is_local_host(host: str) -> bool:
         return False
 
 
+def _unsafe_address(address: str) -> bool:
+    try:
+        parsed = ipaddress.ip_address(address)
+    except ValueError:
+        return True
+    return any(
+        (
+            parsed.is_private,
+            parsed.is_loopback,
+            parsed.is_link_local,
+            parsed.is_multicast,
+            parsed.is_unspecified,
+            parsed.is_reserved,
+        )
+    )
+
+
+def resolve_target_addresses(target: ParsedHttpTarget) -> list[str]:
+    """Resolve a target once and return unique stream addresses.
+
+    Callers that perform a request must use the returned address rather than
+    resolving the hostname again. This closes the check/use gap that makes DNS
+    rebinding useful against a literal host allowlist.
+    """
+
+    try:
+        records = socket.getaddrinfo(
+            target.host,
+            target.port,
+            family=socket.AF_UNSPEC,
+            type=socket.SOCK_STREAM,
+        )
+    except OSError as exc:
+        raise ValueError(f"target host could not be resolved: {target.host}") from exc
+    addresses = sorted({str(record[4][0]) for record in records if record and record[4]})
+    if not addresses:
+        raise ValueError(f"target host resolved to no stream addresses: {target.host}")
+    return addresses
+
+
+def validate_resolved_target(target: ParsedHttpTarget, *, allow_external: bool) -> list[str]:
+    """Resolve and enforce public-address policy before any network request."""
+
+    local_name = is_local_host(target.host)
+    if not local_name and not allow_external:
+        raise ValueError("external execution requires --allow-external")
+    addresses = resolve_target_addresses(target)
+    if local_name:
+        # ``localhost`` and ``*.test`` are local only when they resolve locally.
+        if any(not _unsafe_address(address) for address in addresses):
+            raise ValueError(f"local target resolved to a public address: {target.host}")
+    elif any(_unsafe_address(address) for address in addresses):
+        raise ValueError(f"external target resolved to a private or special address: {target.host}")
+    return addresses
+
+
+def _normalized_secret_key(key: str) -> tuple[str, str, set[str]]:
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(key).lower()).strip("_")
+    compact = normalized.replace("_", "")
+    return normalized, compact, set(normalized.split("_")) if normalized else set()
+
+
+def is_sensitive_query_key(key: str) -> bool:
+    normalized, compact, parts = _normalized_secret_key(key)
+    if normalized in SENSITIVE_QUERY_KEYS:
+        return True
+    if parts & SENSITIVE_QUERY_PARTS:
+        return True
+    return any(compact.startswith(part) or compact.endswith(part) for part in SENSITIVE_QUERY_PARTS if len(part) >= 4)
+
+
+PATH_SECRET_MARKER = re.compile(
+    r"(?i)(secret|token|access[-_]?token|refresh[-_]?token|api[-_]?key|"
+    r"client[-_]?secret|password|passwd|credential|authorization|session|signature|sig)"
+)
+
+
+def _redact_path(path: str) -> str:
+    redacted: list[str] = []
+    for segment in path.split("/"):
+        decoded = unquote(segment)
+        if decoded and PATH_SECRET_MARKER.search(decoded):
+            redacted.append("[REDACTED]")
+        else:
+            redacted.append(redact_text(segment))
+    return "/".join(redacted)
+
+
 def redact_text(value: str) -> str:
     redacted = value
     for pattern in VALUE_PATTERNS:
@@ -177,12 +292,12 @@ def redact_url(value: str) -> str:
         netloc = display_host if port is None else f"{display_host}:{port}"
         query = urlencode(
             [
-                (key, "[REDACTED]" if key.lower() in SENSITIVE_QUERY_KEYS else redact_text(value))
-                for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+                (key, "[REDACTED]" if is_sensitive_query_key(key) else redact_text(query_value))
+                for key, query_value in parse_qsl(parsed.query, keep_blank_values=True)
             ],
             doseq=True,
         )
-        return urlunsplit((parsed.scheme.lower(), netloc, parsed.path, query, ""))
+        return urlunsplit((parsed.scheme.lower(), netloc, _redact_path(parsed.path), query, ""))
     except (UnicodeError, ValueError):
         return redact_text(value)
 

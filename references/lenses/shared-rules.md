@@ -29,6 +29,58 @@ When you find a bug in one place, grep every sibling for the same function name 
 code shape. Escalate each hit to its worst exploitable variant and revisit every
 affected path. One bug class usually recurs.
 
+## Fixed adversarial pass (mandatory for every lens)
+
+For every owned coverage item, keep an assumption ledger. Do not let a plausible label,
+historical match, or analyzer lead substitute for an entry in this ledger:
+
+```text
+assumption: the exact behavior the target relies on
+evidence: the file/line, graph edge, deployment version, or route that supports it
+attacker move: actor, state, input, ordering, and repetition
+expected proof: the authoritative state, balance, message, or response that changes
+negative control: the closest intended path that must remain clean
+disproof: the guard, invariant, configuration, or version fact that would kill the claim
+```
+
+Run the pass in this order and record the marker in working notes:
+
+1. **Feynman** — explain the entry point and its state transition in plain language.
+2. **Socratic** — ask why each guard, conversion, external call, cache, and fallback is
+   needed; continue until the hidden assumption is explicit.
+3. **Inversion** — try three concrete attacker moves with values, actors, and states
+   against every path that looks safe. “I could not break it” is a refutation candidate,
+   not a silent skip.
+4. **Boundary matrix** — vary zero/one/max, stale/fresh, first/repeated, success/failure,
+   alternate actor, alternate token behavior, and inverse/batch/wrapper paths where they
+   exist.
+5. **Seam hunt** — inspect the hand-off to the next lens: oracle → solvency, share math →
+   withdrawal, message → mint, auth → object, route → sink, or source → bytecode.
+6. **Falsification** — run the strongest negative control and record what evidence would
+   disprove the hypothesis before asking another actor to verify it.
+
+## DeFi dependency and token-behavior matrix
+
+When a graph contains value, an oracle, a vault, a swap, a bridge, or an external
+dependency, explicitly check the following assumptions even if no analyzer lead names
+them: exact transfer amount, return-value semantics, decimals, rebasing, callbacks,
+blacklists/pauses, approvals, upgradeability, oracle freshness/deviation/liquidity,
+finality, and failure/retry behavior. A clean local unit test with a standard token is a
+negative control, not coverage of hostile token behavior.
+
+For each dependency record version, trust owner, change mechanism, failure mode, and the
+invariant that would reopen the claim if the dependency changes. Read the source-level
+guard and, where the security property is compiler- or generator-dependent, inspect the
+deployed artifact or a pinned local build.
+
+## Handoff and proof discipline
+
+Do not merge two mechanisms merely because they share a function or lens. Preserve
+distinct fixes and distinct attack paths. A historical incident or KB match is a lead;
+convergence increases priority only. A FINDING must name execution, reachability, trigger,
+impact, negative control, and independent falsification evidence. If any one is missing,
+emit a LEAD or a visible blocked/inconclusive coverage item.
+
 ## Start from the machine's leads
 
 Before reading a line yourself, run the analyzers — they hand you concrete, located

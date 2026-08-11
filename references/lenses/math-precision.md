@@ -16,3 +16,13 @@
 ## Proof fields
 
 `proof: exact inputs, both formulas, integer results, who gains the lost units`
+
+## Required adversarial pass
+
+- Evaluate zero, one, max, just-inside, just-outside, exact boundary, and sign-changing
+  inputs for both token orderings and every rounding direction.
+- Track units and decimals at every conversion. Look for double rounding, stale cached
+  indexes, fee-before/after-rounding differences, and inverse operations that do not
+  return to the original state.
+- For concentrated liquidity, check each tick crossing and exact-in/exact-out branch;
+  for shares, compare preview with execution under transfer fees and donations.

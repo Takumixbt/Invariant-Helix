@@ -13,6 +13,22 @@ gate transitions, reopens, verification assignment and final report release.
 Use the Nemesis alternating loop as a branch protocol, not as an unrestricted
 recursive prompt.
 
+## Model profile
+
+Start the controller with `claude-opus-5` at effort `high`. Dispatch background
+actors with `claude-sonnet-5` at effort `max`, for example:
+
+```text
+claude --model claude-opus-5 --effort high
+claude agents --model claude-sonnet-5 --effort max
+```
+
+If the installed Claude Code build or gateway uses different full model IDs,
+configure those IDs explicitly in `adapters/model-profiles.json` or its provider
+equivalent. Verify that both IDs and effort levels are accepted before dispatch;
+never silently fall back to `opus`, `sonnet`, or another model. “Max” effort and
+a Max subscription are separate checks.
+
 ## Lens dispatch
 
 Run `ih-lens-dispatch` to plan the lenses; execute each planned lens as a background

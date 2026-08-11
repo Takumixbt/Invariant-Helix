@@ -39,6 +39,21 @@ as a hypothesis until its proof and adjudication gates pass.
 Select roles from the target graph and expected coverage gain. Do not create a
 fixed number of agents merely to satisfy a roster.
 
+## Model topology
+
+Select one provider profile before dispatch and read
+`references/method/model-orchestration.md`. The default Codex topology is
+`gpt-5.6-sol` at high reasoning for the controller and `gpt-5.6-luna` at max
+reasoning for bounded actors. The default Claude Code topology is
+`claude-opus-5` at high effort for the controller and `claude-sonnet-5` at max
+effort for bounded actors. The controller owns all gates, merges and release;
+actors never broaden scope or write canonical state.
+
+If the selected model or effort cannot be verified by the host runtime, stop
+model dispatch and record a blocked capability. Do not silently substitute a
+different model or provider. A provider profile is an execution arrangement,
+not authorization to interact with a target.
+
 ## Mandatory gates
 
 The controller must not silently skip a gate. A gate may be not-applicable only
@@ -208,7 +223,7 @@ and verification references for every case. Then load only relevant mode files:
   method/graph-engineering.md, method/agent-coordination.md,
   method/verification-and-falsification.md, method/requirements.md,
   method/reporting.md, method/xray.md, method/money-map.md,
-  method/infrastructure-audit.md
+  method/infrastructure-audit.md, method/model-orchestration.md
 - lenses/shared-rules.md, lenses/auditor-sop.md, lenses/nemesis-loop.md, and the
   22 lens profiles (access-control, math-precision, economic, execution-trace,
   invariant-state, periphery-integration, first-principles, asymmetry, boundary,
@@ -220,5 +235,6 @@ and verification references for every case. Then load only relevant mode files:
 - chains/smart-contract-audit.md, chains/chain-neutral-ir.md, chains/chain-adapters.md,
   chains/invariant-taxonomy.md, chains/property-fuzzing.md
 - knowledge/incident-patterns.md, knowledge/cve-intelligence.md,
-  knowledge/knowledge-base.md, knowledge/attributions.md,
+  knowledge/knowledge-base.md, knowledge/defi-exploit-patterns.md,
+  knowledge/attributions.md,
   knowledge/nemesis-integration.md

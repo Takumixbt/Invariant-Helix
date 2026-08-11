@@ -16,3 +16,17 @@
 ## Proof fields
 
 `proof: capital in, capital out, tracked totals before/after, profit ≥ 0 for attacker`
+
+## Required adversarial pass
+
+- Write the money map as equations before reading the implementation: raw balances,
+  internal totals, shares, debt, fees, rewards, and external positions. Check every branch
+  including zero, partial, emergency, revert, and migration paths.
+- Apply the token-behavior matrix to every accepted asset: fee-on-transfer, rebasing,
+  decimals, false-return, blacklist/pause, and callback behavior. Apply the dependency
+  matrix to every oracle, pool, strategy, bridge, and upgradeable proxy.
+- Chain the seams explicitly: oracle → valuation → solvency; share price → withdrawal;
+  fee/reward accumulator → cohort; external callback → intermediate state. Test whether
+  a small local asymmetry compounds across repeated calls.
+- Negative control: a normal supported transfer and inverse operation must conserve value
+  within the documented rounding bound and leave no profitable self-loop.

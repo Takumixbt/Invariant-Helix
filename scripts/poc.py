@@ -20,6 +20,25 @@ except ImportError:
     from security_utils import atomic_write_text
 
 SAFE = re.compile(r"[^A-Za-z0-9_]+")
+SAFE_ENV = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _comment(value: Any, limit: int = 240) -> str:
+    """Make untrusted finding text stay data inside a Solidity line comment."""
+
+    text = str(value if value is not None else "")
+    escaped: list[str] = []
+    for char in text:
+        codepoint = ord(char)
+        if char == "\r":
+            escaped.append(r"\r")
+        elif char == "\n":
+            escaped.append(r"\n")
+        elif codepoint < 0x20 or codepoint == 0x7F:
+            escaped.append(f"\\x{codepoint:02x}")
+        else:
+            escaped.append(char)
+    return "".join(escaped)[:limit]
 
 
 def _load_finding(path: Path, finding_id: str | None) -> dict[str, Any]:
@@ -46,33 +65,36 @@ def _load_finding(path: Path, finding_id: str | None) -> dict[str, Any]:
 
 
 def scaffold(finding: dict[str, Any], *, fork_url_env: str = "ETH_RPC_URL") -> str:
+    if not isinstance(fork_url_env, str) or not SAFE_ENV.fullmatch(fork_url_env):
+        raise ValueError("fork_url_env must be a valid environment variable name")
     fid = str(finding.get("finding_id") or "FINDING")
-    title = str(finding.get("title") or fid)
-    class_name = "PoC_" + SAFE.sub("_", fid)[:48].strip("_") or "PoC_Finding"
+    title = _comment(finding.get("title") or fid)
+    safe_fid = SAFE.sub("_", fid)[:48].strip("_") or "Finding"
+    class_name = "PoC_" + safe_fid
     if class_name[0].isdigit():
         class_name = "PoC_" + class_name
     triggers = finding.get("minimal_trigger_sequence") or []
     if isinstance(triggers, list):
-        trigger_lines = "\n".join(f"    // {i + 1}. {t}" for i, t in enumerate(triggers))
+        trigger_lines = "\n".join(f"    // {i + 1}. {_comment(t)}" for i, t in enumerate(triggers))
     else:
-        trigger_lines = f"    // {triggers}"
+        trigger_lines = f"    // {_comment(triggers)}"
     path = finding.get("reachable_path") or []
-    path_comment = " -> ".join(str(p) for p in path) if isinstance(path, list) else str(path)
-    root = str(finding.get("root_cause") or "")[:200]
-    claim = str(finding.get("security_claim") or "")[:200]
-    severity = str(finding.get("severity") or "unknown")
+    path_comment = " -> ".join(_comment(p, 120) for p in path) if isinstance(path, list) else _comment(path)
+    root = _comment(finding.get("root_cause") or "")
+    claim = _comment(finding.get("security_claim") or "")
+    severity = _comment(finding.get("severity") or "unknown", 80)
     components = finding.get("affected_components") or []
-    comp = ", ".join(str(c) for c in components) if isinstance(components, list) else str(components)
+    comp = ", ".join(_comment(c, 120) for c in components) if isinstance(components, list) else _comment(components)
 
     return f'''// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import {{Test, console2}} from "forge-std/Test.sol";
 
-/// @title {class_name}
-/// @notice Auto-generated IH scaffold for {fid} — fill in and prove, do not treat as verified.
+/// @title {_comment(class_name, 80)}
+/// @notice Auto-generated IH scaffold for {_comment(fid, 120)} — fill in and prove, do not treat as verified.
 /// @dev Severity hint: {severity}
-/// Title: {title.replace('"', "'")}
+/// Title: {title}
 contract {class_name} is Test {{
     // --- configure ---
     address internal constant VICTIM = address(0xBEEF);
@@ -89,9 +111,9 @@ contract {class_name} is Test {{
     function test_poc_{SAFE.sub('_', fid)[:40].strip('_') or 'finding'}() public {{
         vm.startPrank(ATTACKER);
 
-        // Root cause (from finding): {root.replace('"', "'")}
-        // Claim: {claim.replace('"', "'")}
-        // Components: {comp.replace('"', "'")}
+        // Root cause (from finding): {root}
+        // Claim: {claim}
+        // Components: {comp}
 
         // Minimal trigger sequence from the finding:
 {trigger_lines if trigger_lines.strip() else "    // (none listed — reconstruct from reachable_path)"}

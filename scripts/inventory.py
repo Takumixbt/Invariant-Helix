@@ -7,7 +7,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -83,7 +83,7 @@ def _valid_timestamp(value: Any) -> bool:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     except ValueError:
         return False
-    return parsed.tzinfo is not None
+    return parsed.tzinfo is not None and parsed > datetime.now(timezone.utc)
 
 
 def normalize_target(target: dict[str, Any] | str) -> str:
@@ -156,8 +156,9 @@ def validate_scope(scope: dict[str, Any]) -> list[str]:
     for field in ("case_id", "operator", "authorization_reference", "snapshot_id", "redaction_policy"):
         if field in scope and not _nonempty_string(scope[field]):
             errors.append(f"{field} must be a non-empty string")
-    if "authorization_expires_at" in scope and not _valid_timestamp(scope["authorization_expires_at"]):
-        errors.append("authorization_expires_at must be an ISO-8601 timestamp")
+    if "authorization_expires_at" in scope:
+        if not _valid_timestamp(scope["authorization_expires_at"]):
+            errors.append("authorization_expires_at must be a future ISO-8601 timestamp")
     if scope.get("target_kind") not in TARGET_KINDS:
         errors.append(f"target_kind must be one of: {', '.join(sorted(TARGET_KINDS))}")
 

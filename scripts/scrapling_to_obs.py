@@ -28,10 +28,10 @@ from urllib.parse import parse_qsl
 
 try:
     from .inventory import load_scope
-    from .security_utils import atomic_write_text, parse_http_target
+    from .security_utils import atomic_write_text, parse_http_target, redact
 except ImportError:  # direct script execution
     from inventory import load_scope
-    from security_utils import atomic_write_text, parse_http_target
+    from security_utils import atomic_write_text, parse_http_target, redact
 
 SLUG = re.compile(r"[^a-z0-9]+")
 
@@ -51,7 +51,7 @@ def _route(url: str, method: str, extra: dict[str, Any], reason: str) -> dict[st
     properties = {"method": method.upper(), "origin": target.origin, "path": target.path}
     if params:
         properties["query_params"] = params  # names only; values are dropped
-    properties.update({k: v for k, v in extra.items() if v not in (None, "", [], {})})
+    properties.update(redact({k: v for k, v in extra.items() if v not in (None, "", [], {})}))
     return {
         "id": slug(f"{method}-{locator}", "route"), "kind": "route",
         "label": f"{method.upper()} {target.path}"[:120], "status": "observed",

@@ -136,6 +136,12 @@ class BundleBuilderTests(unittest.TestCase):
         second = build(self._plan(), ROOT / "references/lenses")
         self.assertEqual(first, second)
 
+    def test_lens_name_cannot_escape_profile_directory(self) -> None:
+        plan = self._plan()
+        plan["lenses"][0]["lens"] = "../../../escape"
+        with self.assertRaises(ValueError):
+            build(plan, ROOT / "references/lenses")
+
 
 class XrayGitTests(unittest.TestCase):
     def test_analyzes_this_repository(self) -> None:

@@ -25,3 +25,15 @@
 ## Proof fields
 
 `proof: actor, guard bypassed, privileged state reached, concrete call sequence with values`
+
+## Required adversarial pass
+
+- Build an authority matrix: actor → entry point → object/amount/domain → state or asset
+  reached. Check the same action through direct, batch, router, callback, meta-transaction,
+  initializer, migration, and emergency paths.
+- For signatures, bind signer, chain/domain, contract, nonce, deadline, operation, object,
+  and amount. Test replay after success, expiry, revocation, and a different target.
+- Treat proxy admin, implementation, timelock, guardian, and default-admin roles as
+  separate principals. A delayed ownership transfer does not delay every privileged setter.
+- Negative control: the intended caller succeeds on the intended object while a second
+  identity, stale signature, wrong domain, and wrong object each fail without mutation.

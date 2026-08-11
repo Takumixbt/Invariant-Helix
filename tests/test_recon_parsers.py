@@ -49,6 +49,14 @@ class HttpxTests(unittest.TestCase):
         _, records = _parse("httpx.jsonl", "httpx")
         self.assertIn("React", records[0]["properties"]["tech"])
 
+    def test_secret_values_are_redacted_in_discovery_records(self) -> None:
+        _, records = detect_and_parse(
+            '{"url":"https://example.test/api/TOPSECRET/token?client_secret=TOPSECRET"}',
+            "httpx",
+        )
+        self.assertEqual(len(records), 1)
+        self.assertNotIn("TOPSECRET", str(records[0]))
+
 
 class FfufTests(unittest.TestCase):
     def test_autodetects_and_extracts_results(self) -> None:

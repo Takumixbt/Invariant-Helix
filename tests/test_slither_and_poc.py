@@ -105,6 +105,18 @@ class PocScaffoldTests(unittest.TestCase):
         self.assertIn("forge-std/Test.sol", body)
         self.assertIn("do not treat as verified", body.lower())
 
+    def test_untrusted_trigger_text_cannot_escape_comments(self) -> None:
+        body = scaffold({
+            "finding_id": "EVM-002",
+            "minimal_trigger_sequence": ['safe step\n        vm.writeFile("pwned", "owned");'],
+        })
+        self.assertNotIn('\n        vm.writeFile', body)
+        self.assertIn(r"\n        vm.writeFile", body)
+
+    def test_fork_environment_name_is_validated(self) -> None:
+        with self.assertRaises(ValueError):
+            scaffold({"finding_id": "EVM-003"}, fork_url_env="RPC_URL\nvm.writeFile")
+
 
 if __name__ == "__main__":
     unittest.main()

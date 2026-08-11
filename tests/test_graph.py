@@ -41,6 +41,19 @@ class GraphTests(unittest.TestCase):
                 1,
             )
 
+    def test_semantic_graph_tampering_is_rejected(self) -> None:
+        graph = normalize(ROOT / "evals/web/sample-observations.jsonl")
+        graph["nodes"][0]["kind"] = "not-a-kind"
+        graph["nodes"][0]["status"] = "verified"
+        graph["nodes"][0]["confidence"] = {}
+        graph["edges"][0]["relation"] = "not-a-relation"
+        graph["edges"][0]["status"] = "verified"
+        errors = validate_graph(graph)
+        self.assertTrue(any("kind is invalid" in error for error in errors))
+        self.assertTrue(any("status is invalid" in error for error in errors))
+        self.assertTrue(any("confidence is invalid" in error for error in errors))
+        self.assertTrue(any("relation is invalid" in error for error in errors))
+
     def test_dangling_edge_is_rejected(self) -> None:
         record = {
             "case_id": "case", "snapshot_id": "snap", "id": "actor:test", "kind": "actor",

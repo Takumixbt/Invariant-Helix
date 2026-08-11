@@ -11,9 +11,11 @@ located on ``PATH``.
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import shutil
 import sys
+import sysconfig
 from pathlib import Path
 from typing import Any
 
@@ -44,11 +46,48 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
 }
 
 
+def _is_python_httpx_entrypoint(path: str) -> bool:
+    """Reject Python HTTPX when a capability needs ProjectDiscovery httpx.
+
+    Both tools install an executable named ``httpx`` on Windows.  The Python
+    client can issue one request, but it does not emit the ``httpx -json``
+    reconnaissance format consumed by the recon adapter.  Treating a filename
+    match as sufficient would silently create false coverage.
+    """
+
+    try:
+        executable = Path(path).resolve()
+        scripts_dir = Path(sysconfig.get_path("scripts")).resolve()
+        if executable.parent != scripts_dir:
+            return False
+        distribution = importlib.metadata.distribution("httpx")
+    except (OSError, TypeError, importlib.metadata.PackageNotFoundError):
+        return False
+    return any(
+        entry.name == "httpx"
+        and str(entry.value).lower().startswith("httpx:")
+        for entry in distribution.entry_points
+        if entry.group == "console_scripts"
+    )
+
+
+def _tool_path(tool: str, *, needs_recon_httpx: bool = False) -> str | None:
+    path = shutil.which(tool)
+    if not path:
+        return None
+    if needs_recon_httpx and tool == "httpx" and _is_python_httpx_entrypoint(path):
+        return None
+    return path
+
+
 def probe(capabilities: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     capabilities = capabilities or CAPABILITIES
     report: dict[str, Any] = {}
     for name, spec in capabilities.items():
-        present = [tool for tool in spec["tools"] if shutil.which(tool)]
+        present = [
+            tool for tool in spec["tools"]
+            if _tool_path(tool, needs_recon_httpx=name in {"surface_inventory", "http_crawl"})
+        ]
         bundled = bool(spec["bundled"])
         report[name] = {
             "available": bundled or bool(present),

@@ -16,3 +16,14 @@
 ## Proof fields
 
 `proof: call stack, storage before/after each step, reenter entry, final balances`
+
+## Required adversarial pass
+
+- Trace both success and failure edges for every external call: return value, revert,
+  callback, reentrancy, partial state, emitted message, and retry behavior.
+- Re-enter through a different public function, a token hook, a router, a flash-loan
+  callback, and an upgrade/migration hook. A per-function lock is not automatically a
+  cross-function lock.
+- Compare state snapshots immediately before each interaction and immediately after the
+  authoritative effect. Prove that attacker-controlled collections and gas cost remain
+  bounded.

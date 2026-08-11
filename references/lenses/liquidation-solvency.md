@@ -41,3 +41,14 @@ impossible.
 ## Proof fields
 
 `proof: the position, the manipulated input, and the resulting solvency violation in units`.
+
+## Required adversarial pass
+
+- Trace oracle source → normalization → collateral/debt valuation → health check → close
+  factor → seize/repay → post-liquidation health. Record freshness, deviation, liquidity,
+  and same-transaction manipulability at each edge.
+- Check self-liquidation, partial liquidation loops, dust positions, paused/blacklisted
+  collateral, unprofitable liquidations, and loss socialization. Calculate attacker cost,
+  liquidator gain, victim loss, and residual bad debt in the same units.
+- Negative control: a healthy position stays healthy under bounded price movement and an
+  unhealthy position remains liquidatable without making the system insolvent.

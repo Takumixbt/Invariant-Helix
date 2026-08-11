@@ -93,11 +93,17 @@ def match(
             {
                 "kb_id": entry.get("id"),
                 "source": entry.get("source"),
+                "entry_type": entry.get("entry_type"),
                 "vuln_class": entry.get("vuln_class"),
+                "lenses": entry.get("lenses", []),
                 "cwe": entry.get("cwe"),
+                "severity": entry.get("severity"),
                 "score": value,
                 "matched_keywords": overlap,
                 "title": entry.get("title"),
+                "source_url": entry.get("source_url"),
+                "report_url": entry.get("report_url"),
+                "provenance": entry.get("provenance"),
                 "poc_refs": entry.get("poc_refs", []),
                 "lead_only": True,
             }
@@ -122,12 +128,18 @@ def as_observations(matches: list[dict[str, Any]], case_id: str, snapshot_id: st
                 "confidence": {"level": "low", "reason": "knowledge-base keyword match; lead only, not a finding"},
                 "properties": {
                     "vuln_class": item.get("vuln_class"),
+                    "lenses": item.get("lenses", []),
                     "cwe": item.get("cwe"),
+                    "severity": item.get("severity"),
+                    "source_url": item.get("source_url"),
+                    "entry_type": item.get("entry_type"),
                     "score": item.get("score"),
                     "rank": rank,
                 },
                 "locators": [f"kb:{item.get('source')}:{item.get('kb_id')}"],
-                "evidence_refs": [ref for ref in item.get("poc_refs", [])[:1]] or ["kb:reference-pending"],
+                "evidence_refs": [item.get("source_url")] if item.get("source_url") else (
+                    [ref for ref in item.get("poc_refs", [])[:1]] or ["kb:reference-pending"]
+                ),
             }
         )
     return observations

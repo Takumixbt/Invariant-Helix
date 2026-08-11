@@ -15,3 +15,11 @@
 ## Proof fields
 
 `proof: shares minted/burned, assets moved, exchange rate before/after, victim loss`
+
+## Required adversarial pass
+
+- Test the empty, first-depositor, donation, virtual-offset/dead-share, loss, fee,
+  rebasing, and fee-on-transfer states. Compare preview and execute with exact integers.
+- Run deposit → donate → deposit → redeem and its inverse with both asset directions.
+  Track raw assets, accounted assets, total shares, rounding direction, and each holder's
+  claim; a one-unit victim loss can compound into a material drain.

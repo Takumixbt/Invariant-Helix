@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from scripts.findings_ingest import classify, ingest, parse_document
+from scripts.findings_ingest import classify, ingest, parse_document, parse_simao_detail, parse_simao_index
 
 ROOT = Path(__file__).resolve().parents[1]
 FINDINGS = ROOT / "evals/kb/findings"
@@ -70,6 +70,55 @@ class SafetyTests(unittest.TestCase):
 
     def test_missing_file_is_not_an_error(self) -> None:
         self.assertIsNone(parse_document(FINDINGS / "does-not-exist.md", "s"))
+
+
+class SimaoSourceTests(unittest.TestCase):
+    INDEX = """
+    <section class="sa-eng" data-kind="audit">
+      <div class="sa-ehead">
+        <a class="sa-ehl" href="/reports/demo"><h2 class="sa-name">Demo Protocol</h2>
+          <span class="sa-meta">demo.org<span class="sa-sep">·</span>Sherlock<span class="sa-sep">·</span>Lending<span class="sa-sep">·</span>1st January, 2026</span>
+        </a>
+      </div>
+      <article class="sa-find sa-item" data-sev="High">
+        <a class="sa-frow" href="/findings/demo-stale-oracle"><span class="sa-sev high">High</span>
+          <span class="sa-ft">Stale oracle price accepted during downtime</span><span class="sa-fnum">H-1</span></a>
+        <p class="sa-fsum">The protocol accepts an old oracle value without a freshness check.</p>
+      </article>
+    </section>
+    """
+    DETAIL = """
+    <html><head><link rel="canonical" href="https://0xsimao.com/findings/demo-stale-oracle"></head>
+    <body><div class="sa-page sa-one"><h1>Stale oracle price accepted during downtime</h1>
+      <p class="sa-meta"><span class="sa-sev high">High</span><span><a class="sa-mlk" href="/reports/demo">Demo audit</a>·Sherlock·Lending·1st January, 2026</span><span class="sa-fnum">H-1</span></p>
+      <div class="sa-fbody"><p class="sa-fh">Summary</p><p>Old prices remain accepted.</p>
+        <p class="sa-fh">Vulnerability Detail</p><p>The update timestamp is never checked.</p>
+        <p class="sa-fh">Impact</p><p>Borrowers can open undercollateralized positions.</p>
+        <p class="sa-fh">Recommendation</p><p>Require a freshness threshold.</p>
+        <p class="sa-fh">Tool Used</p><p>Manual Review</p>
+      </div></div></body></html>
+    """
+
+    def test_index_is_one_record_per_finding_with_provenance(self) -> None:
+        entries = parse_simao_index(self.INDEX)
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry["id"], "0xsimao:demo-stale-oracle")
+        self.assertEqual(entry["severity"], "high")
+        self.assertEqual(entry["finding_ref"], "H-1")
+        self.assertEqual(entry["report_url"], "https://0xsimao.com/reports/demo")
+        self.assertEqual(entry["content_depth"], "index-summary")
+
+    def test_detail_preserves_postmortem_sections(self) -> None:
+        entry = parse_simao_detail(self.DETAIL, Path("demo-stale-oracle.html"))
+        self.assertIsNotNone(entry)
+        assert entry is not None
+        self.assertEqual(entry["severity"], "high")
+        self.assertEqual(entry["root_cause"], "The update timestamp is never checked.")
+        self.assertEqual(entry["impact"], "Borrowers can open undercollateralized positions.")
+        self.assertEqual(entry["recommendation"], "Require a freshness threshold.")
+        self.assertEqual(entry["content_depth"], "detail")
+        self.assertEqual(entry["source_url"], "https://0xsimao.com/findings/demo-stale-oracle")
 
 
 if __name__ == "__main__":

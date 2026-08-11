@@ -29,6 +29,8 @@ try:
     from .banner import render as render_banner
     from .build_lens_bundle import build as build_bundles
     from .check_capabilities import blocked_coverage_items, probe
+    from .graph_merge import validate_graph
+    from .inventory import validate_scope
     from .lens_dispatch import plan as dispatch_plan
     from .money_map import build_money_map
     from .normalize_observations import normalize
@@ -39,6 +41,8 @@ except ImportError:  # direct script execution
     from banner import render as render_banner
     from build_lens_bundle import build as build_bundles
     from check_capabilities import blocked_coverage_items, probe
+    from graph_merge import validate_graph
+    from inventory import validate_scope
     from lens_dispatch import plan as dispatch_plan
     from money_map import build_money_map
     from normalize_observations import normalize
@@ -48,29 +52,38 @@ except ImportError:  # direct script execution
 
 
 def _default_case(root: Path, case_id: str, snapshot_id: str) -> dict[str, Any]:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "case_id": case_id,
+        "operator": "local-operator",
+        "authorization_reference": "local-dev-scope",
+        "authorization_expires_at": "2099-01-01T00:00:00Z",
         "snapshot_id": snapshot_id,
-        "authorization": {
-            "granted_by": "local-operator",
-            "granted_at": now,
-            "expires_at": "2099-01-01T00:00:00Z",
-            "scope_statement": f"Local development audit of {root.resolve()}",
-            "rules_of_engagement": "local-static-and-fork-only; no production interaction",
+        "target_kind": "chain",
+        "targets": [{
+            "type": "repository",
+            "value": str(root.resolve()),
+            "in_scope": True,
+            "environment": "local",
+            "notes": "local static and fork-only audit; no production interaction",
+        }],
+        "rules_of_engagement": {
+            "active_testing": False,
+            "max_requests": 1,
+            "max_concurrency": 1,
+            "test_identities": ["auditor-a", "auditor-b"],
+            "oob_allowed": False,
+            "real_funds_allowed": False,
+            "impact_limit": "local static artifacts only; no persistent side effects",
+            "prohibited_effects": ["production interaction", "real-fund movement"],
+            "stop_conditions": ["authorization expiry", "unexpected state change"],
+            "emergency_contact": "local-operator",
+            "data_retention": "local only; delete restricted artifacts after evaluation",
         },
-        "targets": [{"kind": "repository", "locator": str(root.resolve()), "label": root.name}],
-        "exclusions": [],
-        "identities": [{"id": "auditor-a", "role": "discoverer"},
-                       {"id": "auditor-b", "role": "verifier"}],
         "allowed_capabilities": [
             "source_analysis", "chain_simulation", "execution_trace", "property_fuzzing",
             "evidence_manifest",
         ],
-        "impact_limits": {"production": False, "real_funds": False, "notes": "local-dev-scope"},
-        "stop_conditions": ["authorization expiry", "unexpected state change"],
-        "data_handling": "local only",
-        "emergency_contact": "local-operator",
+        "redaction_policy": "default-secret-and-url-v1",
     }
 
 
@@ -131,7 +144,13 @@ def run_audit(
             )
             return 2
         case = _default_case(root, f"local-{root.name}", datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
-        print("WARNING: --local-dev-scope synthesized a case. No URL/repo implies production auth.")
+        print("WARNING: --local-dev-scope synthesized a non-production local case.")
+
+    if not isinstance(case, dict):
+        raise ValueError("case manifest must be a JSON object")
+    scope_errors = validate_scope(case)
+    if scope_errors:
+        raise ValueError("invalid case manifest: " + "; ".join(scope_errors))
 
     case_id = str(case.get("case_id", "unbound-case"))
     snapshot_id = str(case.get("snapshot_id", "unbound-snapshot"))
@@ -164,6 +183,9 @@ def run_audit(
     if isinstance(graph, dict):
         graph.setdefault("case_id", case_id)
         graph.setdefault("snapshot_id", snapshot_id)
+    graph_errors = validate_graph(graph, "audit graph")
+    if graph_errors:
+        raise ValueError("audit graph failed integrity validation: " + "; ".join(graph_errors))
     atomic_write_text(out / "graph.json", json.dumps(graph, indent=2, sort_keys=True) + "\n")
 
     actors = actors or ["auditor-a", "auditor-b"]

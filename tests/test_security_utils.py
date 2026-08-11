@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.security_utils import canonical_http_url, parse_http_target, redact, url_allowed
+from scripts.security_utils import canonical_http_url, parse_http_target, redact, redact_url, url_allowed
 
 
 class SecurityUtilsTests(unittest.TestCase):
@@ -41,6 +41,17 @@ class SecurityUtilsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_http_target("https://api.example.test/safe/%252e%252e/admin")
 
+    def test_deeply_encoded_traversal_is_rejected(self) -> None:
+        encoded = "%2e"
+        for _ in range(20):
+            encoded = encoded.replace("%", "%25")
+        with self.assertRaises(ValueError):
+            parse_http_target(f"https://api.example.test/safe/{encoded}/admin")
+
+    def test_port_zero_is_not_rewritten_to_default_port(self) -> None:
+        with self.assertRaises(ValueError):
+            parse_http_target("http://api.example.test:0/")
+
     def test_value_based_secrets_are_redacted(self) -> None:
         output = redact({"note": "Authorization: Bearer TOPSECRET", "body": "password=hunter2"})
         self.assertNotIn("TOPSECRET", str(output))
@@ -50,6 +61,16 @@ class SecurityUtilsTests(unittest.TestCase):
         output = redact("https://api.example.test/x?token=TOPSECRET&mode=safe")
         self.assertNotIn("TOPSECRET", str(output))
         self.assertIn("mode=safe", str(output))
+
+    def test_variant_secret_query_names_are_redacted(self) -> None:
+        output = redact_url(
+            "https://example.test/x?x-api-key=TOPSECRET&client_secret=TOPSECRET&sessionid=TOPSECRET"
+        )
+        self.assertNotIn("TOPSECRET", output)
+
+    def test_secret_like_path_segments_are_redacted(self) -> None:
+        output = redact_url("https://example.test/api/TOPSECRET/token")
+        self.assertNotIn("TOPSECRET", output)
 
 
 if __name__ == "__main__":

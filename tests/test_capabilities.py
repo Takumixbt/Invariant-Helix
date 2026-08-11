@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from scripts.check_capabilities import CAPABILITIES, blocked_coverage_items, probe
+from scripts.check_capabilities import (
+    CAPABILITIES,
+    _is_python_httpx_entrypoint,
+    blocked_coverage_items,
+    probe,
+)
 from scripts.validate_coverage import STATUSES as COVERAGE_STATUSES
 
 
@@ -33,6 +40,13 @@ class CapabilityTests(unittest.TestCase):
     def test_available_capability_emits_no_blocked_item(self) -> None:
         fake = {"present": {"bundled": True, "tools": []}}
         self.assertEqual(blocked_coverage_items(probe(fake), case_id="c", snapshot_id="s"), [])
+
+    def test_python_httpx_entrypoint_is_not_recon_httpx(self) -> None:
+        scripts_dir = Path(__import__("sysconfig").get_path("scripts"))
+        with patch("scripts.check_capabilities.importlib.metadata.distribution") as distribution:
+            entry = type("Entry", (), {"name": "httpx", "value": "httpx:main", "group": "console_scripts"})
+            distribution.return_value.entry_points = [entry()]
+            self.assertTrue(_is_python_httpx_entrypoint(str(scripts_dir / "httpx.exe")))
 
 
 if __name__ == "__main__":

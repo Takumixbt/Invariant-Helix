@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -29,6 +31,29 @@ class KbSyncTests(unittest.TestCase):
         self.assertEqual(index["entry_count"], len(index["entries"]))
         ids = [(e["source"], e["id"]) for e in index["entries"]]
         self.assertEqual(ids, sorted(ids))
+
+    def test_findings_index_is_merged_with_source_summary(self) -> None:
+        payload = {
+            "schema_version": "1.0",
+            "generated_from": ["0xsimao"],
+            "entries": [{
+                "id": "0xsimao:demo",
+                "source": "0xsimao",
+                "entry_type": "researcher-finding",
+                "title": "Demo rounding finding",
+                "keywords": ["rounding"],
+                "poc_refs": ["https://0xsimao.com/findings/demo"],
+                "source_url": "https://0xsimao.com/findings/demo",
+                "content_depth": "index-summary",
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "findings.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            index = build_index([], [path])
+        self.assertEqual(index["entry_count"], 1)
+        self.assertEqual(index["source_summary"]["0xsimao"]["entry_count"], 1)
+        self.assertEqual(index["entries"][0]["source_url"], "https://0xsimao.com/findings/demo")
 
 
 class KbMatchTests(unittest.TestCase):
@@ -68,6 +93,23 @@ class KbMatchTests(unittest.TestCase):
                  "nodes": [{"kind": "cookie", "label": "session flag toggle"}], "edges": []}
         results = match(graph, self.index, min_score=5.0)
         self.assertEqual(results, [])
+
+    def test_match_preserves_source_provenance(self) -> None:
+        graph = {"case_id": "c", "snapshot_id": "s",
+                 "nodes": [{"kind": "oracle", "label": "oracle price"}], "edges": []}
+        index = {"entries": [{
+            "id": "0xsimao:oracle",
+            "source": "0xsimao",
+            "entry_type": "researcher-finding",
+            "vuln_class": "oracle manipulation",
+            "keywords": ["oracle", "price"],
+            "source_url": "https://0xsimao.com/findings/oracle",
+            "poc_refs": [],
+        }]}
+        results = match(graph, index, min_score=0.3)
+        self.assertEqual(results[0]["source_url"], "https://0xsimao.com/findings/oracle")
+        observations = as_observations(results, "c", "s")
+        self.assertEqual(observations[0]["evidence_refs"], ["https://0xsimao.com/findings/oracle"])
 
 
 if __name__ == "__main__":

@@ -27,10 +27,10 @@ from typing import Any, Iterable
 
 try:
     from .inventory import load_scope
-    from .security_utils import atomic_write_text
+    from .security_utils import atomic_write_text, redact
 except ImportError:  # direct script execution
     from inventory import load_scope
-    from security_utils import atomic_write_text
+    from security_utils import atomic_write_text, redact
 
 SLUG = re.compile(r"[^a-z0-9]+")
 GOBUSTER_LINE = re.compile(r"^(?P<path>/\S*)\s+\(Status:\s*(?P<status>\d{3})\)(?:\s+\[Size:\s*(?P<size>\d+)\])?")
@@ -42,12 +42,15 @@ def slug(text: str, prefix: str) -> str:
 
 
 def _node(kind: str, label: str, locator: str, properties: dict[str, Any], reason: str) -> dict[str, Any]:
+    safe_locator = str(redact(locator))
+    safe_label = str(redact(label))[:120]
+    safe_properties = redact({k: v for k, v in properties.items() if v not in (None, "", [])})
     return {
-        "id": slug(locator, kind), "kind": kind, "label": label[:120], "status": "observed",
+        "id": slug(safe_locator, kind), "kind": kind, "label": safe_label, "status": "observed",
         "sensitivity": "public",
         "confidence": {"level": "medium", "reason": reason},
-        "properties": {k: v for k, v in properties.items() if v not in (None, "", [])},
-        "locators": [locator], "evidence_refs": [f"recon:{locator}"],
+        "properties": safe_properties,
+        "locators": [safe_locator], "evidence_refs": [f"recon:{safe_locator}"],
     }
 
 

@@ -2,7 +2,7 @@
   "case_id": "eval-web-001",
   "operator": "synthetic-evaluator",
   "authorization_reference": "synthetic-fixture",
-  "authorization_expires_at": "2030-01-01T00:00:00Z",
+  "authorization_expires_at": "2099-01-01T00:00:00Z",
   "snapshot_id": "fixture-v1",
   "target_kind": "web",
   "rules_of_engagement": {

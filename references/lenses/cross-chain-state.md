@@ -45,3 +45,13 @@ the message lifecycle — send, deliver, retry, fail — for a path that breaks 
 ## Proof fields
 
 `proof: the message sequence across both chains and the resulting state divergence`.
+
+## Required adversarial pass
+
+- Record source chain, destination chain, sender, receiver, nonce, payload hash, asset,
+  amount, decimals, finality threshold, and one-time-consumption state as separate facts.
+- Test duplicate, reordered, delayed, failed, retried, cross-domain, wrong-sender,
+  wrong-asset, and reorged messages. A valid hash without the correct domain is not
+  authentication.
+- Compare supply and liabilities on both ledgers after every accepted or rejected message;
+  failure handling must not mint twice, burn without credit, or strand a refund.

@@ -34,3 +34,13 @@ response is a FINDING.
 ## Proof fields
 
 `proof: the request, the differential response, and the crossed authorization/sink`.
+
+## Required adversarial pass
+
+- Build a parameter-to-sink table for every route: identity, tenant, object, amount,
+  method, file/path, URL, header, body, redirect, and background-job fields. Check direct,
+  batch, export, webhook, retry, and alternate-content-type paths.
+- For SSRF and path controls, test canonicalization before and after redirects, DNS
+  resolution, encoded separators, userinfo, IPv4/IPv6 forms, and private/link-local
+  destinations using local-only fixtures. A response difference is not enough without a
+  crossed authorization or sink boundary.

@@ -5,9 +5,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.cve_match import load_inputs, match, version_matches
 from scripts.race_runner import allowed, validate_execution_spec
+from scripts.security_utils import parse_http_target, validate_resolved_target
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +115,17 @@ class RaceRunnerTests(unittest.TestCase):
             },
         )
         self.assertTrue(any("expired" in error for error in errors))
+
+    def test_dns_resolution_rejects_private_address_for_external_name(self) -> None:
+        target = parse_http_target("https://public.example.invalid/")
+        with patch(
+            "scripts.security_utils.socket.getaddrinfo",
+            return_value=[(
+                2, 1, 6, "", ("127.0.0.1", 443)
+            )],
+        ):
+            with self.assertRaisesRegex(ValueError, "private or special"):
+                validate_resolved_target(target, allow_external=True)
 
 
 class CveMatcherTests(unittest.TestCase):

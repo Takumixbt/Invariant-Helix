@@ -26,6 +26,10 @@ class InventoryTests(unittest.TestCase):
         self.scope["authorization_expires_at"] = "2030-01-01T00:00:00"
         self.assertTrue(any("authorization_expires_at" in error for error in validate_scope(self.scope)))
 
+    def test_expired_authorization_is_rejected_before_execution(self) -> None:
+        self.scope["authorization_expires_at"] = "2020-01-01T00:00:00Z"
+        self.assertTrue(any("future" in error for error in validate_scope(self.scope)))
+
     def test_missing_rule_is_rejected(self) -> None:
         del self.scope["rules_of_engagement"]["max_concurrency"]
         self.assertTrue(any("max_concurrency" in error for error in validate_scope(self.scope)))

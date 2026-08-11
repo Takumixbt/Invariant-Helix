@@ -34,3 +34,14 @@ assumes and what the callee actually guarantees. The gap is the bug.
 ## Proof fields
 
 `proof: the caller assumption, the callee reality, and the exploited gap`.
+
+## Required adversarial pass
+
+- Build a caller-assumption/callee-guarantee table for every adapter and wrapper. Include
+  non-standard token returns, fee-on-transfer, rebasing, callbacks, decimal changes,
+  paused dependencies, and upgradeable proxies.
+- Revoke and reuse approvals across migration, failed calls, multicall, permit, and
+  delegatecall paths. Check that `msg.sender`, `msg.value`, chain/domain, and asset
+  identity survive each forwarding boundary.
+- Negative control: call the core directly and through the periphery with the same inputs;
+  the authoritative state, fees, and failure behavior must agree.

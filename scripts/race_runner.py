@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import math
 import re
+import socket
 import sys
 import threading
 import time
@@ -27,6 +29,7 @@ try:
         parse_http_target,
         redact,
         redact_url,
+        validate_resolved_target,
         url_allowed,
     )
 except ImportError:  # direct script execution
@@ -38,6 +41,7 @@ except ImportError:  # direct script execution
         parse_http_target,
         redact,
         redact_url,
+        validate_resolved_target,
         url_allowed,
     )
 
@@ -208,8 +212,11 @@ def validate_execution_spec(
                 control = spec.get(control_name)
                 if isinstance(control, dict) and control.get("evidence_ref") not in artifact_ids:
                     errors.append(f"{control_name}.evidence_ref does not resolve")
-        if parsed and not is_local_host(parsed.host) and not allow_external:
-            errors.append("external execution requires --allow-external")
+        if parsed:
+            try:
+                validate_resolved_target(parsed, allow_external=allow_external)
+            except ValueError as exc:
+                errors.append(str(exc))
     return errors
 
 
@@ -232,6 +239,80 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+class PinnedHTTPConnection(http.client.HTTPConnection):
+    """Connect to the validated address while retaining the original Host header."""
+
+    def __init__(self, host: str, *, resolved_ip: str, **kwargs: Any) -> None:
+        self._resolved_ip = resolved_ip
+        self._original_host = host
+        super().__init__(host, **kwargs)
+
+    def connect(self) -> None:
+        self.sock = socket.create_connection(
+            (self._resolved_ip, self.port), self.timeout, self.source_address
+        )
+        if self._tunnel_host:
+            self._tunnel()
+
+
+class PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS equivalent with certificate SNI for the original hostname."""
+
+    def __init__(self, host: str, *, resolved_ip: str, **kwargs: Any) -> None:
+        self._resolved_ip = resolved_ip
+        self._original_host = host
+        super().__init__(host, **kwargs)
+
+    def connect(self) -> None:
+        self.sock = socket.create_connection(
+            (self._resolved_ip, self.port), self.timeout, self.source_address
+        )
+        if self._tunnel_host:
+            self._tunnel()
+        server_hostname = self._tunnel_host or self._original_host
+        self.sock = self._context.wrap_socket(self.sock, server_hostname=server_hostname)
+
+
+class PinnedHTTPHandler(urllib.request.HTTPHandler):
+    def __init__(self, resolved_ip: str) -> None:
+        super().__init__()
+        self._resolved_ip = resolved_ip
+
+    def http_open(self, request: urllib.request.Request) -> Any:
+        return self.do_open(
+            lambda host, **kwargs: PinnedHTTPConnection(
+                host, resolved_ip=self._resolved_ip, **kwargs
+            ),
+            request,
+        )
+
+
+class PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    def __init__(self, resolved_ip: str) -> None:
+        super().__init__()
+        self._resolved_ip = resolved_ip
+
+    def https_open(self, request: urllib.request.Request) -> Any:
+        return self.do_open(
+            lambda host, **kwargs: PinnedHTTPSConnection(
+                host, resolved_ip=self._resolved_ip, **kwargs
+            ),
+            request,
+            context=self._context,
+        )
+
+
+def _pinned_opener(url: str) -> urllib.request.OpenerDirector:
+    target = parse_http_target(url)
+    addresses = validate_resolved_target(target, allow_external=True)
+    return urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        NoRedirect,
+        PinnedHTTPHandler(addresses[0]),
+        PinnedHTTPSHandler(addresses[0]),
+    )
+
+
 def _response_headers(headers: Any) -> tuple[dict[str, Any], dict[str, str]]:
     safe = redact({str(key): str(value) for key, value in headers.items()})
     server_ids = {
@@ -251,8 +332,9 @@ def one_request(
     result: dict[str, Any] = {"request_index": index, "url": redact_url(str(spec["url"]))}
     capture_body = bool(spec.get("capture_body", False))
     request = build_request(spec)
-    opener = urllib.request.build_opener(NoRedirect)
     try:
+        # Resolve immediately before the request and pin the socket to that address.
+        opener = _pinned_opener(str(spec["url"]))
         ready_at = time.time()
         barrier.wait(timeout=min(timeout, 10))
         release_at = time.time()

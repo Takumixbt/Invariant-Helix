@@ -42,3 +42,10 @@ balance.
 ## Proof fields
 
 `proof: the join/exit timestamps, the accrual window, and the value mis-assigned`.
+
+## Required adversarial pass
+
+- Draw the membership timeline at join, accrual, claim, settlement, exit, epoch rollover,
+  parameter update, slashing, and recovery. Compare the three cohorts at each timestamp.
+- Test just-before/just-after boundaries, zero-supply accrual, repeated claims, partial
+  exit, and a new depositor whose reward debt starts at the wrong accumulator.

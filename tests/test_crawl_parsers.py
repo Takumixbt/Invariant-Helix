@@ -69,6 +69,14 @@ class SafetyTests(unittest.TestCase):
         )
         self.assertEqual(len({r["id"] for r in records}), 1)
 
+    def test_extra_crawl_fields_are_redacted(self) -> None:
+        _, records = detect_and_parse(
+            '[{"url":"https://app.example.test/api",'
+            '"fields":{"sessionid":"TOPSECRET"}}]'
+        )
+        self.assertEqual(len(records), 1)
+        self.assertNotIn("TOPSECRET", str(records[0]))
+
 
 class OutputContractTests(unittest.TestCase):
     def test_all_records_are_observed_with_locators(self) -> None:

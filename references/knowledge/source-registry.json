@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "policy": {
+    "cache_directory": "knowledge/cache",
+    "vendor_upstream_content": false,
+    "match_semantics": "historical lead only; never target evidence",
+    "required_proof": "reachable target-specific path plus independent falsification and impact proof"
+  },
+  "sources": [
+    {
+      "id": "0xsimao",
+      "kind": "researcher-findings",
+      "index_url": "https://0xsimao.com/findings",
+      "detail_url_pattern": "https://0xsimao.com/findings/{slug}",
+      "acquisition": "local mirror or browser export",
+      "parser": "scripts/findings_ingest.py",
+      "record_granularity": "one record per published finding",
+      "preserved_fields": [
+        "finding_ref",
+        "severity",
+        "project",
+        "audit_platform",
+        "protocol_category",
+        "disclosed_at",
+        "summary",
+        "vulnerability_detail",
+        "impact",
+        "recommendation",
+        "tool_used",
+        "code_snippet",
+        "fixed_pr",
+        "source_url",
+        "report_url"
+      ],
+      "retention": "derived metadata and source links only; keep full upstream pages in an operator-controlled cache"
+    },
+    {
+      "id": "defi-incidents",
+      "kind": "defi-incident-postmortems",
+      "repository": "https://github.com/kismp123/DeFi-Security-Incident",
+      "acquisition": "ih-kb-sync --fetch",
+      "parser": "scripts/kb_sync.py",
+      "record_granularity": "one record per incident writeup",
+      "preserved_fields": [
+        "incident_date",
+        "vuln_class",
+        "impact",
+        "root_cause",
+        "attack_flow",
+        "on_chain_source",
+        "remediation",
+        "lessons",
+        "estimated_loss",
+        "source_url",
+        "provenance.revision"
+      ],
+      "retention": "gitignored shallow clone; source links are pinned to the checked-out revision"
+    },
+    {
+      "id": "trickest-cve",
+      "kind": "cve-and-poc-catalogue",
+      "repository": "https://github.com/trickest/cve",
+      "acquisition": "ih-kb-sync --fetch",
+      "parser": "scripts/kb_sync.py",
+      "record_granularity": "one record per CVE/PoC markdown record",
+      "preserved_fields": [
+        "cve_id",
+        "cwe",
+        "vuln_class",
+        "summary",
+        "root_cause",
+        "poc_refs",
+        "source_url",
+        "provenance.revision"
+      ],
+      "retention": "gitignored shallow clone; PoC references are leads and are never executed automatically"
+    }
+  ]
+}

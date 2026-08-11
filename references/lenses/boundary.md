@@ -34,3 +34,10 @@ just-outside the guard. Boundaries are where authors stop testing.
 ## Proof fields
 
 `proof: the boundary value, the guard it defeats, and the consequence`.
+
+## Required adversarial pass
+
+For each guard, test the exact boundary, one unit on either side, repeated invocation,
+empty state, stale state, and the largest representable value. Repeat the matrix through
+wrappers, batches, callbacks, failure recovery, and alternate token/chain semantics;
+record the authoritative state rather than relying on a revert alone.

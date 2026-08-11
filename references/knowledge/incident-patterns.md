@@ -45,6 +45,16 @@ source_references
 - bridge message replay or incorrect asset mapping;
 - fee, reward or debt accumulator uses inconsistent units;
 - oracle, relayer or keeper trust exceeds the actual validation.
+- raw token behavior differs from the accounting model (fee-on-transfer, rebasing,
+  callback, blacklist, decimals, or false-return tokens);
+- a patch, compiler, optimizer, generated library, or proxy changes the guard that the
+  source review appeared to establish;
+- concentrated-liquidity tick crossing or inverse rounding breaks conservation only at a
+  boundary, exact-out path, or alternate token ordering;
+- governance voting power is temporarily purchasable or execution is not delayed,
+  scoped, or bound to the voted action;
+- a cross-chain receipt authenticates a hash but not its domain, nonce, finality, sender,
+  asset mapping, or one-time consumption.
 
 ## Common web patterns
 

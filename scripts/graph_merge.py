@@ -10,8 +10,24 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .normalize_observations import (
+        CONFIDENCE_LEVELS,
+        NODE_KINDS,
+        OBSERVATION_STATUSES,
+        RELATIONS,
+        SAFE_ID,
+        SENSITIVITIES,
+    )
     from .security_utils import atomic_write_text
 except ImportError:  # direct script execution
+    from normalize_observations import (
+        CONFIDENCE_LEVELS,
+        NODE_KINDS,
+        OBSERVATION_STATUSES,
+        RELATIONS,
+        SAFE_ID,
+        SENSITIVITIES,
+    )
     from security_utils import atomic_write_text
 
 
@@ -22,6 +38,28 @@ NODE_FIELDS = {
 EDGE_FIELDS = {
     "id", "from", "relation", "to", "status", "confidence", "evidence_refs", "locator", "valid_for",
 }
+
+
+def _nonempty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _string_list(value: Any, field: str, prefix: str, *, required: bool = False) -> bool:
+    if not isinstance(value, list) or not all(_nonempty_string(item) for item in value):
+        return False
+    return not required or bool(value)
+
+
+def _valid_confidence(value: Any) -> bool:
+    return (
+        isinstance(value, dict)
+        and value.get("level") in CONFIDENCE_LEVELS
+        and _nonempty_string(value.get("reason"))
+    )
+
+
+def _has_provenance(locators: Any, evidence_refs: Any) -> bool:
+    return bool(locators) or bool(evidence_refs)
 
 
 def load_graph(path: Path) -> dict[str, Any]:
@@ -36,11 +74,13 @@ def load_graph(path: Path) -> dict[str, Any]:
 
 def validate_graph(graph: dict[str, Any], source: str = "graph") -> list[str]:
     errors: list[str] = []
+    if graph.get("schema_version") != "1.0":
+        errors.append(f"{source}: schema_version must be '1.0'")
     case_id = graph.get("case_id")
     snapshot_id = graph.get("snapshot_id")
-    if not isinstance(case_id, str) or not case_id:
+    if not _nonempty_string(case_id):
         errors.append(f"{source}: case_id is required")
-    if not isinstance(snapshot_id, str) or not snapshot_id:
+    if not _nonempty_string(snapshot_id):
         errors.append(f"{source}: snapshot_id is required")
     nodes = graph.get("nodes")
     edges = graph.get("edges")
@@ -57,13 +97,32 @@ def validate_graph(graph: dict[str, Any], source: str = "graph") -> list[str]:
         if missing:
             errors.append(f"{prefix} missing: {', '.join(sorted(missing))}")
         node_id = node.get("id")
-        if not isinstance(node_id, str) or not node_id:
+        if not isinstance(node_id, str) or not SAFE_ID.fullmatch(node_id):
             errors.append(f"{prefix}.id is invalid")
         elif node_id in node_ids:
             errors.append(f"{prefix}.id is duplicated")
-        node_ids.add(str(node_id))
+        else:
+            node_ids.add(node_id)
         if node.get("case_id") != case_id or node.get("snapshot_id") != snapshot_id:
             errors.append(f"{prefix} does not match graph case/snapshot")
+        if node.get("kind") not in NODE_KINDS:
+            errors.append(f"{prefix}.kind is invalid")
+        if not _nonempty_string(node.get("label")):
+            errors.append(f"{prefix}.label is invalid")
+        if node.get("status") not in OBSERVATION_STATUSES:
+            errors.append(f"{prefix}.status is invalid")
+        if node.get("sensitivity") not in SENSITIVITIES:
+            errors.append(f"{prefix}.sensitivity is invalid")
+        if not _valid_confidence(node.get("confidence")):
+            errors.append(f"{prefix}.confidence is invalid")
+        if not _string_list(node.get("locators"), "locators", prefix):
+            errors.append(f"{prefix}.locators must be an array of non-empty strings")
+        if not _string_list(node.get("evidence_refs"), "evidence_refs", prefix):
+            errors.append(f"{prefix}.evidence_refs must be an array of non-empty strings")
+        if not _has_provenance(node.get("locators"), node.get("evidence_refs")):
+            errors.append(f"{prefix} requires a locator or evidence reference")
+        if not isinstance(node.get("properties"), dict):
+            errors.append(f"{prefix}.properties must be an object")
     edge_ids: set[str] = set()
     for index, edge in enumerate(edges):
         prefix = f"{source}: edges[{index}]"
@@ -71,13 +130,29 @@ def validate_graph(graph: dict[str, Any], source: str = "graph") -> list[str]:
         if missing:
             errors.append(f"{prefix} missing: {', '.join(sorted(missing))}")
         edge_id = edge.get("id")
-        if not isinstance(edge_id, str) or not edge_id:
+        if not isinstance(edge_id, str) or not SAFE_ID.fullmatch(edge_id):
             errors.append(f"{prefix}.id is invalid")
         elif edge_id in edge_ids:
             errors.append(f"{prefix}.id is duplicated")
-        edge_ids.add(str(edge_id))
+        else:
+            edge_ids.add(edge_id)
+        if not _nonempty_string(edge.get("from")) or not _nonempty_string(edge.get("to")):
+            errors.append(f"{prefix}.from and .to are required strings")
         if edge.get("from") not in node_ids or edge.get("to") not in node_ids:
             errors.append(f"{prefix} has a dangling endpoint")
+        if edge.get("relation") not in RELATIONS:
+            errors.append(f"{prefix}.relation is invalid")
+        if edge.get("status") not in OBSERVATION_STATUSES:
+            errors.append(f"{prefix}.status is invalid")
+        if not _valid_confidence(edge.get("confidence")):
+            errors.append(f"{prefix}.confidence is invalid")
+        if not _string_list(edge.get("evidence_refs"), "evidence_refs", prefix):
+            errors.append(f"{prefix}.evidence_refs must be an array of non-empty strings")
+        locator = edge.get("locator")
+        if locator is not None and not _nonempty_string(locator):
+            errors.append(f"{prefix}.locator must be null or a non-empty string")
+        if not _has_provenance(locator, edge.get("evidence_refs")):
+            errors.append(f"{prefix} requires a locator or evidence reference")
         if edge.get("valid_for") != snapshot_id:
             errors.append(f"{prefix}.valid_for does not match the graph snapshot")
     return errors
