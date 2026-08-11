@@ -1,52 +1,18 @@
-# Lens: math and precision
+# Lens: math precision
 
-**Role.** You exploit integer arithmetic: rounding, precision loss, decimal mismatch,
-overflow, scale mixing. Every truncation and wrong-direction round is extraction.
+**Role.** Force rounding, truncation, or scaling errors that move value to the attacker.  
 **Capability:** `source_analysis`. **Domain:** contract.
 
 ## Attack surfaces
 
-- **Map the math.** Find every fixed-point system (WAD, RAY, BPS, token decimals,
-  oracle decimals), scale conversion, and division in value-moving functions.
-- **Wrong rounding.** Deposits round shares down, withdrawals round assets down, debt
-  rounds up, fees round up. Drain every division that rounds the wrong way.
-  Compoundable = critical.
-- **Zero-round to steal.** Feed 1 wei / 1 share. Find where fees truncate to zero,
-  rewards vanish at large totals, or shares round away entirely.
-- **Amplify truncation.** Division-before-multiplication chains; trace a truncated
-  return value that is later multiplied, across function boundaries.
-- **Overflow intermediates.** For every `a*b/c`, construct `a*b` overflowing before the
-  divide saves it. Flash-loan-scale operands.
-- **Decimal mismatch.** Hardcoded `1e18` on 6-decimal tokens; `18 - decimals`
-  underflow for >18-decimal tokens; variable oracle decimals into constant-decimal code.
-- **Downcast breaks.** `uint256 → uint128/uint96/uint64` without bounds; narrow-int
-  `uint24/int24` round-trips dropping the sign bit; `uint64((x<<64)/y)` wrapping to
-  near-zero at saturation.
-- **First-depositor inflation.** Donate to inflate the exchange rate; make the next
-  depositor round to zero shares and steal the deposit.
-- **Tiny-principal accrual.** `rate/SECONDS_PER_YEAR` yielding zero accrual when
-  `principal·rate < SCALE`.
-
-Every finding needs concrete numbers. No numbers = LEAD.
-
-## Chain-neutral core
-
-The mechanism is: an accounting unit is converted or divided such that value is not
-conserved across the operation. Locate the unit, the conversion, and the rounding
-direction against `references/chains/chain-neutral-ir.md`.
-
-## Per-family notes
-
-- **evm** — Solidity 0.8 checked math still allows unchecked blocks and cast wraps;
-  FullMath/mulDiv ordering.
-- **solana** — `u64`/`u128` checked_* omissions; `try_from` casts; token decimals from
-  the mint account, not assumed.
-- **move** — `u64`/`u128` abort-on-overflow shifts the risk to truncating divisions
-  and `as` casts.
-- **cosmwasm** — `Uint128`/`Decimal` rounding modes; `checked_div` vs `/`.
-- **cairo/starknet** — felt252 field arithmetic wraps modulo p; range-check gaps.
-- **cardano-utxo** — value bundles are integers; datum-encoded fixed points.
+1. **Div-before-mul** — find `/` then `*`; recompute with mul-before-div; show delta ≥ 1 wei.
+2. **Round direction** — withdraw/mint/burn: does rounding always favor the protocol or the caller? Test amount = 1, mid, max.
+3. **Share = assets * supply / balance** — zero supply, dust deposit, donation to vault before first deposit.
+4. **Fee on transfer** — fee-on-transfer / rebasing tokens: accounting uses `amount` not `balanceOf` delta.
+5. **Decimal mismatch** — 6 vs 18 decimals in oracle or pair math without scale.
+6. **Unchecked cast** — `uint256` → `uint128` / `int256` truncation.
+7. **Interest index** — ray/wad mix-ups; accumulate then truncate once vs per-step.
 
 ## Proof fields
 
-`proof: concrete arithmetic with actual numbers showing the value moved`.
+`proof: exact inputs, both formulas, integer results, who gains the lost units`

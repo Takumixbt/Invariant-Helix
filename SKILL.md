@@ -220,5 +220,5 @@ and verification references for every case. Then load only relevant mode files:
 - chains/smart-contract-audit.md, chains/chain-neutral-ir.md, chains/chain-adapters.md,
   chains/invariant-taxonomy.md, chains/property-fuzzing.md
 - knowledge/incident-patterns.md, knowledge/cve-intelligence.md,
-  knowledge/knowledge-base.md, knowledge/pashov-integration.md,
+  knowledge/knowledge-base.md, knowledge/attributions.md,
   knowledge/nemesis-integration.md

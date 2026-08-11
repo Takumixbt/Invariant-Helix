@@ -127,7 +127,7 @@ class AuditOrchestratorTests(unittest.TestCase):
     def test_run_audit_on_fixture_produces_leads_and_bundles(self) -> None:
         fixture = ROOT / "evals" / "evm"
         with tempfile.TemporaryDirectory(prefix="ih-audit-") as tmp:
-            code = run_audit(fixture, Path(tmp), local_dev=True)
+            code = run_audit(fixture, Path(tmp), local_dev=True, run_slither=False)
             self.assertEqual(code, 0)
             self.assertTrue((Path(tmp) / "observations.jsonl").is_file())
             self.assertTrue((Path(tmp) / "money-map.json").is_file())

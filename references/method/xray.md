@@ -1,6 +1,6 @@
 # X-ray: executable pre-audit modeling
 
-X-ray is the model-building phase (gates G2/G3). Unlike the pashov original it emits
+X-ray is the model-building phase (gates G2/G3). It emits
 **Invariant Helix observations JSONL**, not markdown, so `scripts/normalize_observations.py`
 turns it directly into the case/snapshot-scoped graph. It is a producer, not a verdict.
 

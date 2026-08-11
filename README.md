@@ -1,125 +1,90 @@
-```text
-██╗███╗   ██╗██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ███╗   ██╗████████╗
-██║████╗  ██║██║   ██║██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║╚══██╔══╝
-██║██╔██╗ ██║██║   ██║███████║██████╔╝██║███████║██╔██╗ ██║   ██║
-██║██║╚██╗██║╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██║╚██╗██║   ██║
-██║██║ ╚████║ ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██║ ╚████║   ██║
-╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝
-        ██╗  ██╗███████╗██╗     ██╗██╗  ██╗
-        ██║  ██║██╔════╝██║     ██║╚██╗██╔╝
-        ███████║█████╗  ██║     ██║ ╚███╔╝
-        ██╔══██║██╔══╝  ██║     ██║ ██╔██╗
-        ██║  ██║███████╗███████╗██║██╔╝ ██╗
-        ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝
+# Invariant Helix
 
-        evidence-gated  ·  graph-driven  ·  fails closed
-```
+Fail-closed security audit skill for **authorized** web apps, APIs, infra, and smart contracts.
 
-An evidence-gated, graph-driven security-audit skill for authorized web apps, APIs,
-infrastructure, smart contracts, and ZK circuits. Run `ih-banner` to print this plus a
-live readiness readout of what your installation can actually do. It combines four
-things no single tool does at once:
-
-- **Recall** — 22 attacker lenses (contract, accounting, web, infra, ZK) with concrete moves.
-- **Memory** — hypotheses grounded against real exploits, CVEs, and researcher findings.
-- **Real tools** — Scrapling, Burp-MCP, Foundry, recon CLIs, bound to capability names.
-- **Discipline** — G0–G9 gates, hashed evidence, and independent falsification decide
-  what is actually real on *this* target.
-
-It is an **executable** skill, not a prompt pack: `ih-self-audit` mechanically verifies
-that every lens is dispatchable, every documented command resolves, and every claim the
-docs make matches what the validators enforce.
-
-It does not promise omniscience. It makes tested paths, proof, independent
-falsification, unresolved assumptions, and coverage debt explicit, and fails closed when
-scope, provenance, or execution limits are incomplete.
-
-## How it works (three lanes)
-
-1. **Tool adapters** bind a real tool to one of 13 capability names; a missing tool
-   becomes coverage debt, never a silent gap (`ih-check-capabilities`).
-2. **Orchestration** dispatches only the lenses the graph justifies, each with an
-   independent verifier and a SHA-256-hashed bundle, then converges, scores (CVSS 3.1),
-   and reports — convergence raises priority/confidence, never status.
-3. **Knowledge base** grounds hypothesis generation (G5) against real history; every
-   match is a lead the gates must still prove.
-
-## Repository tree
+AI findings are worthless until they climb:
 
 ```text
-Invariant-Helix/
-├── SKILL.md              controller: G0–G9 gates + capability routing
-├── INSTALL.md            tiered install commands (core needs only Python)
-├── QUICKSTART.md         copy-paste end-to-end run
-├── HANDOFF.md            full walkthrough for someone new to auditing
-├── references/           the methodology, grouped:
-│   ├── method/           gates, safety, coverage, evidence, graph, reporting, x-ray,
-│   │                     money-map (model the value before hunting the bugs)
-│   ├── lenses/           22 attacker lenses + shared-rules, SOP, nemesis-loop
-│   ├── web/              recon, toolchain, session model, auth logic, race testing
-│   ├── chains/           contract audit, neutral IR, invariants, property fuzzing
-│   └── knowledge/        incident patterns, CVE intel, knowledge base, integration
-├── adapters/             bind tools to capabilities:
-│   ├── web/              scrapling · burp-mcp · recon-cli · cve-intel · http · race
-│   ├── chains/           12 families incl. zk-circuit + registry.json
-│   ├── fuzzing/          echidna-medusa · foundry-invariant · chain-native
-│   ├── audit/            pashov · nemesis bridges · peer-tools.json
-│   └── claude-code.md · codex.md · generic-cli.md
-├── scripts/              stdlib-only: validators + the new engine (x-ray, dispatch,
-│                         converge, cvss, chain, kb, capabilities, normalizers)
-├── schemas/              JSON contracts the validators enforce
-├── knowledge/            report templates + gitignored fetched corpus cache
-├── evals/                synthetic fixtures (web, evm, solana, kb, recon)
-└── tests/                adversarial regression suite
+UNKNOWN → PLAUSIBLE → REACHABLE → REPRODUCED → VERIFIED
 ```
 
-## Quick start
+Gates G0–G9 + hashed evidence + independent falsification decide what is real. Missing tools become **coverage debt**, never silent passes.
 
-Python 3.10+. `pip install -e .` exposes the `ih-*` commands. Full walk-through in
-[QUICKSTART.md](QUICKSTART.md); install tiers in [INSTALL.md](INSTALL.md). New to security
-auditing, or taking this project over? Start with **[HANDOFF.md](HANDOFF.md)**.
+## Install
 
 ```bash
+git clone https://github.com/Takumixbt/Invariant-Helix.git
+cd Invariant-Helix
 pip install -e .
-ih-banner                                        # identity + live readiness
-ih-self-audit                                    # the skill checks its own wiring
-python -m unittest discover -s tests -v          # all gates green
-ih-check-capabilities                            # what is installed vs blocked
-ih-solidity-analyze --scope case.json --root src --output leads.jsonl   # located leads
-ih-xray-enumerate --scope evals/evm/sample-scope.json --root evals/evm --output /tmp/x.jsonl
-ih-normalize /tmp/x.jsonl --output /tmp/graph.json
-ih-lens-dispatch --graph /tmp/graph.json --actor a --actor b
+ih-self-audit
+ih-check-capabilities
 ```
 
-## Active testing safety
+Python 3.10+. Optional: Foundry, Slither, recon CLIs, Burp (see `INSTALL.md`).
 
-Passive/local analysis is the default. Active scans, fuzzing, race tests, OOB callbacks,
-and production reproductions require an explicit case manifest and capability admission.
-The bundled race runner enforces scope/identity/expiry/actor/concurrency/impact limits
-and refuses real-fund execution because it cannot enforce a monetary ceiling. No URL,
-RPC endpoint, repository, or source tree implies authorization.
-
-## Project status
-
-Version **0.4** adds one-command `ih-audit`, money-map extraction, pre-seeded lens
-bundles (analyzer leads at dispatch), sharper Solidity detectors (first-depositor,
-unlimited approve, unchecked ERC20 returns), stricter critical/high proof tokens, and
-a Windows-safe git-root check. Version 0.3 delivered the attacker-lens engine,
-executable x-ray, knowledge-base grounding, CVSS/kill-chain/reporting, and tool
-adapters — all behind the existing gates.
-
-It remains a methodology and orchestration contract, not an exploit kit or a guarantee
-that every vulnerability will be found. Native adapter maturity and unavailable
-capabilities stay visible as coverage debt.
-
-### One-command local Solidity prep
+## Quick start (Solidity)
 
 ```bash
-pip install -e .
 ih-audit path/to/contracts --local-dev-scope --out .ih-audit
-# hash bundles with ih-evidence; run lens agents; nothing is verified by ih-audit alone
+# → observations, money-map, dispatch plan, lens bundles
+# nothing is verified yet — run lenses, prove, falsify, then:
+
+ih-poc .ih-audit/findings.json --output test/PoC_EXAMPLE.t.sol
+forge test --match-contract PoC_ -vvv
 ```
 
-See [SECURITY.md](SECURITY.md) for responsible use, and
-[references/knowledge/pashov-integration.md](references/knowledge/pashov-integration.md)
-for what was ported from pashov, bountyforge, and nemesis and how each maps to the gates.
+Fixtures only (no target needed):
+
+```bash
+ih-solidity-analyze --scope evals/evm/sample-scope.json --root evals/evm --output leads.jsonl
+ih-banner
+```
+
+## What you get
+
+| Piece | Role |
+|---|---|
+| `SKILL.md` | Controller: G0–G9 + routing |
+| 22 lenses | Attacker personas with concrete moves |
+| `ih-*` CLIs | Validators, analyzers, dispatch, evidence |
+| Graph + money map | Model value before hunting bugs |
+| Knowledge base | Historical leads (never auto-findings) |
+
+## Commands that matter
+
+| Command | Does |
+|---|---|
+| `ih-audit` | One-shot prep: analyze → map → dispatch → bundles |
+| `ih-solidity-analyze` | Lexical leads (hypothesized) |
+| `ih-slither-ingest` | Slither JSON/SARIF → hypothesized leads |
+| `ih-money-map` | Conservation / accounting candidates |
+| `ih-lens-dispatch` | Graph-justified lenses + seed leads |
+| `ih-poc` | Foundry PoC scaffold from a finding |
+| `ih-validate-findings` | Schema + independence + proof gates |
+| `ih-evaluate-case --release` | Release only if gates pass |
+| `ih-self-audit` | Skill checks its own wiring |
+
+## Rules (non-negotiable)
+
+1. No target without written authorization.
+2. Discoverer ≠ verifier (enforced).
+3. Multi-agent agreement never sets status.
+4. Incomplete work is not a clean bill of health.
+5. Real-fund race tests are refused.
+
+## Layout
+
+```text
+SKILL.md          controller
+INSTALL.md        install tiers
+references/       methodology + 22 lenses
+adapters/         tool bindings
+scripts/          ih-* engine (stdlib)
+schemas/          JSON contracts
+evals/            fixtures
+tests/            adversarial suite
+```
+
+## License
+
+MIT. See `SECURITY.md` for responsible use.

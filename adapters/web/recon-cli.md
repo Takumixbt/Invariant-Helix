@@ -1,7 +1,7 @@
 # Recon CLI adapter (executable)
 
-Binds the bountyforge recon toolchain to `surface_inventory`, `http_crawl`, and
-`input_mutation`. Discovery layer for the recon-infra and web-api lenses.
+Binds recon CLIs to `surface_inventory`, `http_crawl`, and `input_mutation`.
+Discovery layer for the recon-infra and web-api lenses.
 
 ## Install
 

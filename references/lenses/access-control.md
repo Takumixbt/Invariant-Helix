@@ -1,45 +1,27 @@
 # Lens: access control
 
-**Role.** You obtain or exercise authority outside its intended scope.
+**Role.** Obtain or exercise authority outside its intended scope.  
 **Capability:** `source_analysis`. **Domain:** contract.
+
+## Concrete moves (run these)
+
+1. **Permissionless privileged write** — list every `external`/`public` non-view function that writes non-`msg.sender`-scoped state without a modifier or `msg.sender` check.
+2. **Initializer re-entry** — call `initialize` / `__init` twice after deploy; proxy vs implementation admin confusion.
+3. **Role transfer ≠ action delay** — if only ownership transfer is timelocked, exercise instant `setTreasury` / `setFee` / `pause` as compromised admin.
+4. **Two-step ownership half-done** — set `pendingOwner` to attacker; see if anything privileged is callable before `acceptOwnership`.
+5. **Signature auth** — replay, cross-contract, missing domain separator, zero deadline, malleable sig.
+6. **Confused deputy** — router/multicall/forwarder executes attacker calldata with protocol authority.
+7. **tx.origin** — any auth on `tx.origin` → phishing path.
+8. **Default admin** — `DEFAULT_ADMIN_ROLE` / `owner()` can drain or upgrade; document blast radius.
 
 ## Attack surfaces
 
-- **Enumerate authority.** List every privileged action and the exact guard that
-  gates it. A function with no modifier but an internal `msg.sender`/signer check is
-  role-gated, not permissionless — verify the body.
-- **Missing/weak guards.** Permissionless functions that write privileged state;
-  initializers reachable twice; `initializer`/`reinitializer` gaps; unprotected
-  `upgradeTo`, `setOwner`, `setTreasury`, `setStrategy`.
-- **Confused deputy.** A trusted contract forwards an attacker-chosen call; router or
-  multicall executing with the victim's authority; `delegatecall` into attacker code.
-- **Role transfer vs action delay.** A timelock on role *transfer* does not protect
-  instant operational functions a compromised holder can still call.
-- **Two-step ownership gaps.** `acceptOwnership`/`acceptMsig` with a `msg.sender ==
-  pending` check but no zero-address guard.
-- **Signature-as-auth.** Authorization by signature without domain separation, nonce,
-  deadline, or replay protection (overlaps trust-gap).
-
-## Chain-neutral core
-
-Every authority edge in the graph must have a proof: who may traverse it, and what
-guard enforces that. Find edges with no guard, or a guard weaker than the authority
-it protects.
-
-## Per-family notes
-
-- **evm** — modifiers vs internal checks; `tx.origin`; proxy admin vs implementation
-  admin confusion.
-- **solana** — `is_signer`, PDA seed ownership, `has_one`, account substitution: an
-  attacker passes a look-alike account the program never checks owner/authority on.
-- **move** — capability resources (`key`/`store` abilities); a capability moved or
-  copied out of scope; `signer` vs address arguments.
-- **cosmwasm** — `info.sender` checks, admin migrate authority, reply-handler
-  impersonation.
-- **cairo/starknet** — `get_caller_address`, account-abstraction validation, L1↔L2
-  message senders.
-- **cardano-utxo** — required signatories in script context; minting policy authority.
+- Missing/weak guards on privileged state
+- Initializers without `initializer` / reinitializer
+- `upgradeTo`, `setOwner`, `setStrategy`, emergency withdraw
+- `delegatecall` into attacker code; proxy admin vs implementation
+- Capability/resource movement (Move), PDA substitution (Solana)
 
 ## Proof fields
 
-`proof: the actor, the guard bypassed, and the privileged state reached`.
+`proof: actor, guard bypassed, privileged state reached, concrete call sequence with values`

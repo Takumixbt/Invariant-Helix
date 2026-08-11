@@ -101,7 +101,7 @@ adapters/             bind real tools to capability names
   web/                scrapling · burp-mcp · recon-cli · cve-intel · http · race
   chains/             12 chain families + registry.json
   fuzzing/            echidna-medusa · foundry-invariant · chain-native
-  audit/              peer-tools.json + pashov/nemesis bridges
+  audit/              peer-tools.json + external bridges
 
 schemas/              6 JSON contracts the validators enforce
 scripts/              27 programs, standard library only

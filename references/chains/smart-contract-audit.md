@@ -1,7 +1,7 @@
 # Smart-contract and protocol audit
 
 This is the chain-independent control procedure. Select the native adapter for
-execution semantics and use the Pashov matrix for specialist depth.
+execution semantics and use the contract lenses for specialist depth.
 
 ## X-ray
 

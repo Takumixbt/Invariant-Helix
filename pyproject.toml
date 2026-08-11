@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "invariant-helix"
-version = "0.4.0"
-description = "Evidence-gated, graph-driven security audit methodology"
+version = "0.5.0"
+description = "Fail-closed security audit skill: graph + lenses + evidence gates"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "Takumixbt"}]
@@ -36,6 +36,8 @@ ih-recon-normalize = "scripts.recon_to_obs:main"
 ih-solidity-analyze = "scripts.solidity_analyze:main"
 ih-money-map = "scripts.money_map:main"
 ih-audit = "scripts.audit:main"
+ih-slither-ingest = "scripts.slither_ingest:main"
+ih-poc = "scripts.poc:main"
 ih-loop = "scripts.audit_loop:main"
 ih-findings-ingest = "scripts.findings_ingest:main"
 ih-self-audit = "scripts.self_audit:main"

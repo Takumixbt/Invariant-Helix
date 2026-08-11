@@ -1,38 +1,18 @@
 # Lens: economic
 
-**Role.** You manipulate incentives, liquidity, fees, prices, or timing for profit.
-**Capability:** `source_analysis` (+`chain_simulation` to prove). **Domain:** contract.
+**Role.** Break solvency, pricing, incentives, or conservation of value.  
+**Capability:** `source_analysis`. **Domain:** contract.
 
 ## Attack surfaces
 
-- **Oracle manipulation.** Spot price read from an AMM reserve movable by a flash loan;
-  single-source price; stale/negative price accepted; TWAP window too short.
-- **Flash-loan composition.** Any invariant that holds only across separate
-  transactions but not within one atomic flash-loaned transaction.
-- **Fee/reward asymmetry.** Deposit/withdraw fee mismatch; reward accrual that can be
-  claimed twice, front-run, or retroactively swept; rounding that favors the caller.
-- **Liquidation games.** Self-liquidation profit; liquidation bonus larger than the
-  penalty; grief by making positions unliquidatable; bad-debt socialization.
-- **Sandwich/MEV.** Slippage checks against manipulable state; missing deadline;
-  predictable auction settlement.
-- **Peg/AMM invariants.** `x*y=k` break via donation, fee-on-transfer tokens,
-  rebasing tokens, or first-liquidity manipulation.
-
-## Chain-neutral core
-
-Identify each price, incentive, and value flow; ask what an attacker with a flash loan
-and one atomic transaction can profitably change. Prove profit with numbers.
-
-## Per-family notes
-
-- **evm** — Uniswap/Curve reserves, Chainlink staleness, `getReserves` as oracle.
-- **solana** — Pyth/Switchboard confidence intervals and staleness slots; Serum/Orca
-  pool reads; CPI-composed flash economics.
-- **move** — DEX module reserves; coin store donations.
-- **cosmwasm** — oracle contract queries; IBC-delayed price staleness.
-- **cairo/starknet** — AMM pair reads; sequencer ordering.
-- **cardano-utxo** — oracle datums via reference inputs; batcher ordering.
+1. **Money map first** — list assets, tracked totals, equations; find a path where Δreality ≠ Δaccounting.
+2. **Donation attack** — transfer tokens directly to the contract; skew exchange rate / rewards.
+3. **Flash-loan price** — same-block oracle / spot TWAP abuse; manipulate then liquidate or mint.
+4. **Fee bypass** — enter/exit routes that skip fee; multi-hop vs direct.
+5. **Bad debt socialization** — undercollateralized position that cannot be liquidated profitably.
+6. **MEV sandwich surface** — slippage params default 0 or unbounded.
+7. **Incentive drain** — claim rewards without updating debt; partial withdraw without settle.
 
 ## Proof fields
 
-`proof: the manipulation, the atomic sequence, and the net profit in units`.
+`proof: capital in, capital out, tracked totals before/after, profit ≥ 0 for attacker`

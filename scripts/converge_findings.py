@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Merge lens outputs and promote leads — without ever setting a verified status.
 
-This is bountyforge/pashov "Turn 4" (dedup + convergence + lead promotion) corrected
+Dedup + convergence for multi-lens output. Deliberately corrected so agreement
 for Invariant Helix's anti-confirmation rule. Multi-lens agreement raises *priority*
 and *confidence*; it NEVER sets a finding's status. Promoted leads enter at
 ``hypothesis`` and must still pass gate G8 falsification with an independent verifier.

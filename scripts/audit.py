@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +32,7 @@ try:
     from .money_map import build_money_map
     from .normalize_observations import normalize
     from .security_utils import atomic_write_text
+    from .slither_ingest import ingest as ingest_slither
     from .solidity_analyze import analyze_tree
 except ImportError:  # direct script execution
     from build_lens_bundle import build as build_bundles
@@ -38,6 +41,7 @@ except ImportError:  # direct script execution
     from money_map import build_money_map
     from normalize_observations import normalize
     from security_utils import atomic_write_text
+    from slither_ingest import ingest as ingest_slither
     from solidity_analyze import analyze_tree
 
 
@@ -68,6 +72,37 @@ def _default_case(root: Path, case_id: str, snapshot_id: str) -> dict[str, Any]:
     }
 
 
+def _try_slither(root: Path, out: Path, case_id: str, snapshot_id: str) -> list[dict[str, Any]]:
+    """Run slither if on PATH; return hypothesized leads or [] if unavailable/failed."""
+    if not shutil.which("slither"):
+        return []
+    json_path = out / "slither.json"
+    try:
+        proc = subprocess.run(
+            ["slither", str(root), "--json", str(json_path)],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if not json_path.is_file():
+        # slither may write even with non-zero exit (findings found)
+        return []
+    try:
+        leads = ingest_slither(json_path, case_id, snapshot_id)
+        atomic_write_text(
+            out / "slither-leads.jsonl",
+            "".join(json.dumps(r, sort_keys=True) + "\n" for r in leads),
+        )
+        if proc.returncode not in (0, 255, 1):  # 1/255 often mean findings
+            pass
+        return leads
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        return []
+
+
 def run_audit(
     root: Path,
     out: Path,
@@ -75,6 +110,7 @@ def run_audit(
     case_path: Path | None = None,
     actors: list[str] | None = None,
     local_dev: bool = False,
+    run_slither: bool = True,
 ) -> int:
     root = root.resolve()
     if not root.is_dir():
@@ -109,6 +145,10 @@ def run_audit(
         atomic_write_text(out / "blocked-coverage.json", json.dumps(blocked, indent=2) + "\n")
 
     facts, leads = analyze_tree(root, case_id, snapshot_id)
+    slither_leads: list[dict[str, Any]] = []
+    if run_slither:
+        slither_leads = _try_slither(root, out, case_id, snapshot_id)
+        leads = leads + slither_leads
     observations = facts + leads
     obs_path = out / "observations.jsonl"
     atomic_write_text(obs_path, "".join(json.dumps(r, sort_keys=True) + "\n" for r in observations))
@@ -141,6 +181,7 @@ def run_audit(
         "root": str(root),
         "facts": len(facts),
         "leads": len(leads),
+        "slither_leads": len(slither_leads),
         "lenses_planned": sum(1 for e in plan.get("lenses", []) if e.get("status") == "planned"),
         "lenses_blocked": sum(1 for e in plan.get("lenses", []) if e.get("status") == "blocked"),
         "conservation_candidates": len(money.get("conservation_candidates", [])),
@@ -172,10 +213,16 @@ def main(argv: list[str] | None = None) -> int:
         help="explicitly synthesize a local non-production case (required if --case omitted)",
     )
     parser.add_argument("--actor", action="append", dest="actors", default=None)
+    parser.add_argument("--no-slither", action="store_true", help="skip slither even if installed")
     args = parser.parse_args(argv)
     try:
         return run_audit(
-            args.root, args.out, case_path=args.case, actors=args.actors, local_dev=args.local_dev_scope,
+            args.root,
+            args.out,
+            case_path=args.case,
+            actors=args.actors,
+            local_dev=args.local_dev_scope,
+            run_slither=not args.no_slither,
         )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(f"audit error: {exc}", file=sys.stderr)

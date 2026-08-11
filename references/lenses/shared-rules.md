@@ -1,7 +1,6 @@
 # Shared lens rules
 
-Every lens obeys these rules. They port the pashov/bountyforge mental-tool protocol
-into Invariant Helix and bind its output to the gate system.
+Every lens obeys these rules. Output is bound to the G0–G9 gate system.
 
 ## Bundle discipline
 

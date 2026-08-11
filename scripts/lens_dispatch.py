@@ -27,9 +27,8 @@ except ImportError:  # direct script execution
     from security_utils import atomic_write_text
 
 
-# lens id -> (domain, capability, trigger node kinds). A lens is a candidate when the
-# graph contains any of its trigger kinds. Ported from pashov (contract) and
-# bountyforge (web/recon) attacker profiles, kept chain-neutral.
+# lens id -> domain, capability, trigger node kinds. Candidate only when the graph
+# contains a trigger kind (no fixed roster).
 LENSES: dict[str, dict[str, Any]] = {
     "access-control": {"domain": "contract", "capability": "source_analysis",
                        "triggers": ["contract", "program", "entrypoint", "authority", "role", "capability"]},
