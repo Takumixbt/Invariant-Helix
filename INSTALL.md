@@ -37,7 +37,7 @@ Windows notes and Burp jar load: [docs/BURP-MCP.md](docs/BURP-MCP.md).
 ```bash
 python -m unittest discover -s tests -q
 ih-self-audit
-ih-audit evals/evm --local-dev-scope --out .ih-audit-smoke
+ih-audit evals/evm --local-dev-scope --out ./out/smoke
 ```
 
 One methodology. One package. Tools only deepen the same gates.
