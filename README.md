@@ -101,12 +101,24 @@ RPC endpoint, repository, or source tree implies authorization.
 
 ## Project status
 
-Version 0.3 adds the attacker-lens engine, executable x-ray, knowledge-base grounding,
-CVSS/kill-chain/reporting, and executable tool adapters — all behind the existing gates,
-with the adversarial regression suite extended to cover them. It remains a methodology
-and orchestration contract, not an exploit kit or a guarantee that every vulnerability
-will be found. Native adapter maturity and unavailable capabilities stay visible as
-coverage debt.
+Version **0.4** adds one-command `ih-audit`, money-map extraction, pre-seeded lens
+bundles (analyzer leads at dispatch), sharper Solidity detectors (first-depositor,
+unlimited approve, unchecked ERC20 returns), stricter critical/high proof tokens, and
+a Windows-safe git-root check. Version 0.3 delivered the attacker-lens engine,
+executable x-ray, knowledge-base grounding, CVSS/kill-chain/reporting, and tool
+adapters — all behind the existing gates.
+
+It remains a methodology and orchestration contract, not an exploit kit or a guarantee
+that every vulnerability will be found. Native adapter maturity and unavailable
+capabilities stay visible as coverage debt.
+
+### One-command local Solidity prep
+
+```bash
+pip install -e .
+ih-audit path/to/contracts --local-dev-scope --out .ih-audit
+# hash bundles with ih-evidence; run lens agents; nothing is verified by ih-audit alone
+```
 
 See [SECURITY.md](SECURITY.md) for responsible use, and
 [references/knowledge/pashov-integration.md](references/knowledge/pashov-integration.md)

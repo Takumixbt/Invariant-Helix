@@ -145,7 +145,15 @@ class XrayGitTests(unittest.TestCase):
         self.assertEqual(records[0]["status"], "inferred")
 
     def test_non_repository_returns_empty_not_error(self) -> None:
-        self.assertEqual(analyze(Path("/tmp"), "c", "s"), [])
+        import tempfile
+
+        # Must not inherit a parent checkout: git walks up; we require toplevel == root.
+        with tempfile.TemporaryDirectory(prefix="ih-nongit-") as tmp:
+            self.assertEqual(analyze(Path(tmp), "c", "s"), [])
+        # Nested path under this repo must also return empty (not parent history).
+        nested = ROOT / "evals" / "web"
+        if nested.is_dir() and not (nested / ".git").exists():
+            self.assertEqual(analyze(nested, "c", "s"), [])
 
     def test_history_observations_are_never_observed_facts(self) -> None:
         for record in analyze(ROOT, "c", "s", limit=20):

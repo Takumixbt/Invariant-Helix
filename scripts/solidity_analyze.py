@@ -282,6 +282,64 @@ def analyze_source(source: str, rel: str) -> tuple[list[dict[str, Any]], list[di
                     "address setter accepts address(0)",
                 ))
 
+        # 9. Unlimited ERC20 approve (type(uint256).max / 2**256-1 style).
+        if is_entry and re.search(
+            r"\.approve\s*\([^,]+,\s*(type\s*\(\s*uint256\s*\)\s*\.\s*max|~uint256\s*\(\s*0\s*\)|"
+            r"0xfff{8,}|2\s*\*\*\s*256\s*-\s*1)",
+            body,
+            re.I,
+        ):
+            leads.append(_lead(
+                f"{rel}-{name}-maxapprove", f"unlimited approve in {name}", locator,
+                {"file": rel, "line": line, "function": name, "lens": "trust-gap",
+                 "bug_class": "unlimited-approval"},
+                "approve of max uint is a standing authority grant",
+            ))
+
+        # 10. First-depositor / empty-supply mint without virtual offset (share inflation class).
+        if is_entry and is_mutating and re.search(r"totalSupply\s*\(\s*\)\s*==\s*0|totalSupply\s*==\s*0", body):
+            if re.search(r"\b(_mint|mint)\s*\(", body) and not re.search(
+                r"VIRTUAL|OFFSET|DEAD|DEAD_SHARES|1e3|1000\s*\*|MINIMUM_LIQUIDITY", body, re.I
+            ):
+                leads.append(_lead(
+                    f"{rel}-{name}-firstdep", f"empty-supply path in {name} may allow share inflation",
+                    locator,
+                    {"file": rel, "line": line, "function": name, "lens": "share-exchange-rate",
+                     "bug_class": "first-depositor-inflation"},
+                    "mint when totalSupply==0 without an inflation offset is a classic vault bug class",
+                ))
+
+        # 11. ERC20 transfer/transferFrom return value ignored (non-standard tokens).
+        for call in re.finditer(r"\.(transferFrom|transfer)\s*\(", body):
+            window = body[max(0, call.start() - 80):call.end() + 120]
+            if re.search(r"safeTransfer", window):
+                continue
+            if not re.search(r"\b(bool\s+\w+|require\s*\(|if\s*\(\s*!?\s*\w+)", window):
+                leads.append(_lead(
+                    f"{rel}-{name}-{call.start()}-xferret",
+                    f"unchecked {call.group(1)} return in {name}", locator,
+                    {"file": rel, "line": line, "function": name, "lens": "periphery-integration",
+                     "bug_class": "unchecked-erc20-return"},
+                    "non-standard ERC20s return false instead of reverting",
+                ))
+                break
+
+        # 12. msg.value accepted with no amount binding (common fee-on-transfer / accounting miss).
+        if is_entry and "msg.value" in body and is_mutating:
+            if not re.search(r"msg\.value\s*==|==\s*msg\.value|require\s*\(\s*msg\.value", body):
+                if re.search(r"\b(deposit|receive|payable)\b", name + body[:80], re.I) or "payable" in fn["mutability"]:
+                    # Only flag when value is stored asymmetrically without equality check.
+                    if re.search(r"(balances?|deposits?|amounts?)\s*(\[|\.|$)", body) and not re.search(
+                        r"balances?\s*\[[^\]]+\]\s*\+=\s*msg\.value|msg\.value\s*;", body
+                    ):
+                        leads.append(_lead(
+                            f"{rel}-{name}-msgvalue", f"{name} uses msg.value without an equality bind",
+                            locator,
+                            {"file": rel, "line": line, "function": name, "lens": "economic",
+                             "bug_class": "msg-value-accounting"},
+                            "value path without explicit amount==msg.value is a frequent accounting gap",
+                        ))
+
     return facts, leads
 
 

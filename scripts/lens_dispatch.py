@@ -88,12 +88,37 @@ def graph_kinds(graph: dict[str, Any]) -> set[str]:
     }
 
 
+def _seed_leads_for_lens(lens: str, seed_leads: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Attach analyzer/KB leads that name this lens — still hypothesized, never findings."""
+    if not seed_leads:
+        return []
+    attached: list[dict[str, Any]] = []
+    for lead in seed_leads:
+        if not isinstance(lead, dict):
+            continue
+        props = lead.get("properties") if isinstance(lead.get("properties"), dict) else {}
+        target = str(props.get("lens") or "")
+        if target != lens:
+            continue
+        attached.append({
+            "id": lead.get("id"),
+            "label": lead.get("label"),
+            "bug_class": props.get("bug_class"),
+            "locators": lead.get("locators") or [],
+            "confidence": lead.get("confidence"),
+            "status": "hypothesized",
+            "note": "pre-seeded lead — prove reachability and impact; do not promote on sight",
+        })
+    return attached[:40]  # hard cap so bundles stay agent-readable
+
+
 def plan(
     graph: dict[str, Any],
     *,
     actors: list[str] | None = None,
     capability_report: dict[str, Any] | None = None,
     allowed_capabilities: list[str] | None = None,
+    seed_leads: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     actors = actors or DEFAULT_ACTORS
     report = capability_report or probe()
@@ -124,6 +149,7 @@ def plan(
             blockers.append(f"capability {capability} not admitted by the case manifest")
         if verifier is None or verifier == owner:
             blockers.append("cannot assign an independent verifier: need at least two distinct actors")
+        seeded = _seed_leads_for_lens(lens, seed_leads)
         entries.append(
             {
                 "lens": lens,
@@ -136,19 +162,22 @@ def plan(
                 "status": "planned" if not blockers else "blocked",
                 "blockers": blockers,
                 "bundle_ref": f"bundle:{lens}",
+                "seed_leads": seeded,
+                "seed_lead_count": len(seeded),
             }
         )
         index += 1
     planned = [entry for entry in entries if entry["status"] == "planned"]
     blocked = [entry for entry in entries if entry["status"] == "blocked"]
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "case_id": case_id,
         "snapshot_id": snapshot_id,
         "graph_node_kinds": sorted(kinds),
         "actors": actors,
         "planned_count": len(planned),
         "blocked_count": len(blocked),
+        "seed_leads_total": sum(int(e.get("seed_lead_count") or 0) for e in entries),
         "lenses": entries,
     }
 
@@ -160,19 +189,34 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--coverage", type=Path, help="reserved: coverage bundle for target prioritization")
     parser.add_argument("--actor", action="append", dest="actors", default=[],
                         help="an actor that can discover or verify (repeatable; >=2 for independence)")
+    parser.add_argument("--leads", type=Path,
+                        help="optional observations JSONL (e.g. ih-solidity-analyze) to pre-seed lenses")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
         graph = json.loads(args.graph.read_text(encoding="utf-8"))
         if not isinstance(graph, dict):
             raise ValueError("graph must be a JSON object")
+        seed_leads: list[dict[str, Any]] = []
+        if args.leads:
+            for line in args.leads.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                item = json.loads(line)
+                if isinstance(item, dict) and item.get("kind") == "hypothesis":
+                    seed_leads.append(item)
         allowed = None
         if args.case_manifest:
             case = load_scope(args.case_manifest)
             allowed = case.get("allowed_capabilities")
             if isinstance(allowed, list):
                 allowed = [str(item) for item in allowed]
-        result = plan(graph, actors=args.actors or None, allowed_capabilities=allowed)
+        result = plan(
+            graph,
+            actors=args.actors or None,
+            allowed_capabilities=allowed,
+            seed_leads=seed_leads or None,
+        )
         if args.output:
             atomic_write_text(args.output, json.dumps(result, indent=2, sort_keys=True) + "\n")
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
@@ -181,8 +225,16 @@ def main(argv: list[str] | None = None) -> int:
     for entry in result["lenses"]:
         mark = "plan" if entry["status"] == "planned" else "BLOCK"
         note = "" if entry["status"] == "planned" else f"  <- {entry['blockers'][0]}"
-        print(f"  [{mark}] {entry['lens']:<22} {entry['domain']:<9} own={entry['owner']} vfy={entry['verifier']}{note}")
-    print(f"\n{result['planned_count']} planned, {result['blocked_count']} blocked")
+        seeds = entry.get("seed_lead_count") or 0
+        seed_note = f" seeds={seeds}" if seeds else ""
+        print(
+            f"  [{mark}] {entry['lens']:<22} {entry['domain']:<9} "
+            f"own={entry['owner']} vfy={entry['verifier']}{seed_note}{note}"
+        )
+    print(
+        f"\n{result['planned_count']} planned, {result['blocked_count']} blocked, "
+        f"{result.get('seed_leads_total', 0)} seed lead(s)"
+    )
     return 0
 
 

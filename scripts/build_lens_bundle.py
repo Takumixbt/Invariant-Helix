@@ -40,11 +40,32 @@ def build(plan: dict[str, Any], lens_dir: Path, sources: str = "") -> list[tuple
             continue
         lens = str(entry.get("lens"))
         profile = _read(lens_dir / f"{lens}.md")
+        seeds = entry.get("seed_leads") if isinstance(entry.get("seed_leads"), list) else []
+        if seeds:
+            seed_lines = [
+                "These are *hypothesized* analyzer leads. Prove reachability and impact. "
+                "Do not promote to finding without G7 proof and G8 independent falsification.\n"
+            ]
+            for seed in seeds:
+                if not isinstance(seed, dict):
+                    continue
+                locs = ", ".join(str(x) for x in (seed.get("locators") or [])[:4])
+                seed_lines.append(
+                    f"- **{seed.get('bug_class') or 'lead'}**: {seed.get('label')} "
+                    f"({locs}) id={seed.get('id')}"
+                )
+            seed_section = "## Pre-seeded leads (hypothesized only)\n\n" + "\n".join(seed_lines) + "\n\n"
+        else:
+            seed_section = (
+                "## Pre-seeded leads (hypothesized only)\n\n"
+                "_None attached. Start from the lens attack surfaces and the graph._\n\n"
+            )
         content = (
             f"# Lens bundle: {lens}\n\n"
             f"case: {plan.get('case_id')}  snapshot: {plan.get('snapshot_id')}\n"
             f"owner: {entry.get('owner')}  verifier: {entry.get('verifier')}\n\n"
             f"## Auditor SOP\n\n{sop}\n\n## Shared rules\n\n{shared}\n\n"
+            f"{seed_section}"
             f"## Lens profile\n\n{profile}\n\n## Source under review\n\n{sources or '<appended by operator>'}\n"
         )
         bundles.append((f"bundle-{lens}.md", content))

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,13 @@ ADJUDICATED = {"verified", "released", "downgraded", "true_positive"}
 PROOF_LEVELS = {"P0", "P1", "P2", "P3", "P4"}
 VERDICTS = {"TRUE_POSITIVE", "FALSE_POSITIVE", "DOWNGRADED", "DUPLICATE", "INCONCLUSIVE"}
 CONFIDENCE_LEVELS = {"low", "medium", "high"}
+# Concrete proof tokens required for material (critical/high) findings leaving hypothesis.
+# Blocks vibe-only Crits: severity cannot fill an evidence gap.
+_CONCRETE_PROOF = re.compile(
+    r"(\b0x[a-fA-F0-9]{4,}\b|\b\d{2,}\b|\bforge\b|\banvil\b|\btrace\b|\bpoc\b|"
+    r"\bcalldata\b|\btx\.|\brequire\b|\brevert\b|\btest[A-Z_])",
+    re.I,
+)
 TRANSITIONS = {
     "hypothesis": {"under_verification", "refuted", "duplicate", "inconclusive"},
     "under_verification": {"verified", "downgraded", "refuted", "duplicate", "inconclusive"},
@@ -327,6 +335,27 @@ def validate(
             errors.append(f"{prefix} P4 requires independent reproduction")
         if finding.get("discoverer_id") == finding.get("verifier_id"):
             errors.append(f"{prefix} discoverer and verifier must be different")
+        # Material findings past hypothesis need a concrete trigger or proof method token.
+        # Severity alone cannot graduate a vibes-only claim.
+        if severity in {"critical", "high"} and status in {
+            "under_verification", "verified", "released", "downgraded",
+        }:
+            proof_blob = " ".join(
+                str(finding.get(field) or "")
+                for field in (
+                    "minimal_trigger_sequence", "reachable_path", "verification_method",
+                    "observable_consequence", "root_cause",
+                )
+            )
+            if isinstance(finding.get("minimal_trigger_sequence"), list):
+                proof_blob += " " + " ".join(str(x) for x in finding["minimal_trigger_sequence"])
+            if isinstance(finding.get("reachable_path"), list):
+                proof_blob += " " + " ".join(str(x) for x in finding["reachable_path"])
+            if not _CONCRETE_PROOF.search(proof_blob):
+                errors.append(
+                    f"{prefix} critical/high past hypothesis requires concrete proof tokens "
+                    f"(numbers, 0x…, forge/trace/PoC/test) in trigger/path/method"
+                )
         if release:
             if status not in RELEASABLE:
                 errors.append(f"{prefix} is not releasable: status={status}")

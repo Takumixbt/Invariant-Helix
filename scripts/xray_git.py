@@ -37,12 +37,37 @@ def git(root: Path, *args: str) -> str:
     return result.stdout if result.returncode == 0 else ""
 
 
+def is_git_root(root: Path) -> bool:
+    """True only when *root itself* is a repository toplevel.
+
+    ``git -C <path> rev-parse --is-inside-work-tree`` walks parents, so a temp
+    directory under a checkout would otherwise inherit history from an ancestor.
+    That launders git observations onto non-repos (and failed the Windows suite).
+    """
+    try:
+        resolved = root.resolve()
+    except OSError:
+        return False
+    if not resolved.is_dir():
+        return False
+    inside = git(resolved, "rev-parse", "--is-inside-work-tree").strip().lower()
+    if inside != "true":
+        return False
+    toplevel = git(resolved, "rev-parse", "--show-toplevel").strip()
+    if not toplevel:
+        return False
+    try:
+        return Path(toplevel).resolve() == resolved
+    except OSError:
+        return False
+
+
 def slug(text: str, prefix: str) -> str:
     return f"{prefix}:{SLUG.sub('-', text.lower()).strip('-')[:100] or 'x'}"[:128]
 
 
 def analyze(root: Path, case_id: str, snapshot_id: str, *, limit: int = 200) -> list[dict[str, Any]]:
-    if not git(root, "rev-parse", "--is-inside-work-tree").strip():
+    if not is_git_root(root):
         return []
     branch = git(root, "rev-parse", "--abbrev-ref", "HEAD").strip() or "HEAD"
     log = git(root, "log", f"-{limit}", "--pretty=format:%H%x1f%an%x1f%s")
