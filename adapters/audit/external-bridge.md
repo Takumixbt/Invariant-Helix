@@ -1,18 +1,18 @@
-# External skill bridge (optional)
+# Tool output inside the methodology
 
-If you already run another auditor skill, feed its output into IH as **hypotheses**.
+Invariant Helix is **one** audit methodology. External tools (Slither, Burp, Foundry, recon CLIs) are not separate products — they feed the **same** gates as native analyzers.
 
 ## Rule
 
-External tools generate leads only. They never adjudicate. Status still requires G7 proof + G8 independent falsification.
+Any external output enters as a **hypothesis** only. G7 proof + G8 independent falsification still required. Tools never adjudicate.
 
-## Ingest patterns
+## How it plugs in
 
-| External output | IH treatment |
+| Tool output | IH step |
 |---|---|
-| Static analyzer SARIF/JSON | `ih-slither-ingest` → hypothesized leads |
-| Markdown agent findings | map each to a finding at `hypothesis` |
-| Fuzz crash | coverage evidence + hypothesis lead |
-| Pre-audit report | observations / invariants (inferred) |
+| Slither JSON/SARIF | `ih-slither-ingest` / auto in `ih-audit` → hypothesized leads |
+| Foundry / fuzz crash | evidence + hypothesis |
+| Recon (nmap, httpx, …) | `ih-recon-normalize` → graph |
+| Burp / HAR | `ih-scrapling-normalize` → graph |
 
-When no external tool is present, use native lenses + `ih-solidity-analyze` + `ih-audit`.
+Missing a tool does not fork the methodology. It records **coverage debt** and continues.

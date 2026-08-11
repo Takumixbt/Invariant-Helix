@@ -7,16 +7,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.audit import run_audit
+from scripts.lens_dispatch import plan
+from scripts.money_map import build_money_map
+from scripts.solidity_analyze import analyze_source
+from scripts.xray_git import is_git_root
+
 ROOT = Path(__file__).resolve().parents[1]
-import sys
-
-sys.path.insert(0, str(ROOT))
-
-from scripts.audit import run_audit  # noqa: E402
-from scripts.lens_dispatch import plan  # noqa: E402
-from scripts.money_map import build_money_map  # noqa: E402
-from scripts.solidity_analyze import analyze_source  # noqa: E402
-from scripts.xray_git import is_git_root  # noqa: E402
 
 
 VAULT = """
@@ -69,7 +66,7 @@ class MoneyMapTests(unittest.TestCase):
 
     def test_leads_include_first_depositor_class(self) -> None:
         _, leads = analyze_source(VAULT, "Vault.sol")
-        classes = {str(l["properties"].get("bug_class")) for l in leads}
+        classes = {str(lead["properties"].get("bug_class")) for lead in leads}
         self.assertIn("first-depositor-inflation", classes)
         self.assertIn("reentrancy", classes)  # CEI on withdraw
 
@@ -105,10 +102,9 @@ class SeedLeadDispatchTests(unittest.TestCase):
             },
             seed_leads=leads,
         )
-        et = next(e for e in result["lenses"] if e["lens"] == "execution-trace")
+        et = next(entry for entry in result["lenses"] if entry["lens"] == "execution-trace")
         self.assertGreaterEqual(et["seed_lead_count"], 1)
         self.assertEqual(et["seed_leads"][0]["bug_class"], "reentrancy")
-        # Seeds never change status of the plan entry to verified-like.
         self.assertIn(et["status"], {"planned", "blocked"})
 
 

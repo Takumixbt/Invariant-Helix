@@ -7,13 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-import sys
-
-sys.path.insert(0, str(ROOT))
-
-from scripts.poc import scaffold  # noqa: E402
-from scripts.slither_ingest import from_sarif, from_slither_json, ingest  # noqa: E402
+from scripts.poc import scaffold
+from scripts.slither_ingest import from_sarif, from_slither_json, ingest
 
 
 class SlitherIngestTests(unittest.TestCase):

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "invariant-helix"
-version = "0.5.0"
-description = "Fail-closed security audit skill: graph + lenses + evidence gates"
+version = "0.5.1"
+description = "One fail-closed audit methodology: gates, lenses, graph, evidence"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "Takumixbt"}]

@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from .banner import render as render_banner
     from .build_lens_bundle import build as build_bundles
     from .check_capabilities import blocked_coverage_items, probe
     from .lens_dispatch import plan as dispatch_plan
@@ -35,6 +36,7 @@ try:
     from .slither_ingest import ingest as ingest_slither
     from .solidity_analyze import analyze_tree
 except ImportError:  # direct script execution
+    from banner import render as render_banner
     from build_lens_bundle import build as build_bundles
     from check_capabilities import blocked_coverage_items, probe
     from lens_dispatch import plan as dispatch_plan
@@ -216,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-slither", action="store_true", help="skip slither even if installed")
     args = parser.parse_args(argv)
     try:
+        sys.stdout.write(render_banner(colour=sys.stdout.isatty()))
         return run_audit(
             args.root,
             args.out,
