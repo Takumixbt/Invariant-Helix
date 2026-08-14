@@ -35,7 +35,7 @@ FAST TIER ─ Actors (sub-agents)
 DEEP-LOGIC ACTORS ─ the two engines (feynman, state)
    discovery, but the reasoning is harder than a mechanical lens sweep.
    → on a capable fast tier (Sonnet 5 max) they run as normal actors.
-   → on a weak fast tier (deepseek-v4-flash) they route UP to the strong
+   → on a weak fast tier (DeepSeek-V4-Flash-0731) they route UP to the strong
      model, because flash under-performs on first-principles logic. Recon and
      mechanical lenses stay on flash; the loop does not.
 ```
@@ -46,9 +46,9 @@ DEEP-LOGIC ACTORS ─ the two engines (feynman, state)
 
 | Role | Claude Code | DeepSeek / Hermes |
 |---|---|---|
-| **Orchestrator / Judge** (intake, dispatch, crossover, convergence, gate, verify, report) | **Opus 4.8** | **deepseek-v4-pro** |
-| **Deep-logic actors** (feynman, state, execution-trace, invariant) | Sonnet 5 (max effort) | **deepseek-v4-pro** ¹ |
-| **Fast actors** — web (recon, access-control, injection, client-side, business-logic, graphql, supply-chain) + web3 (economic, math, access-upgrade, integration, periphery, gap-hunter×3) | Sonnet 5 (max effort) | **deepseek-v4-flash** |
+| **Orchestrator / Judge** (intake, dispatch, crossover, convergence, gate, verify, report) | **Opus 4.8** | **DeepSeek-V4-Pro-0813** |
+| **Deep-logic actors** (feynman, state, execution-trace, invariant) | Sonnet 5 (max effort) | **DeepSeek-V4-Pro-0813** ¹ |
+| **Fast actors** — web (recon, access-control, injection, client-side, business-logic, graphql, supply-chain) + web3 (economic, math, access-upgrade, integration, periphery, gap-hunter×3) | Sonnet 5 (max effort) | **DeepSeek-V4-Flash-0731** |
 
 ¹ On DeepSeek, the deep-logic engines route to **pro**, not flash — flash is fine
 for breadth, weak for first-principles logic. On Claude, Sonnet 5 max handles
@@ -72,19 +72,19 @@ delegation model is the actors.
 
 ```yaml
 model:
-  default: "deepseek/deepseek-v4-pro"      # ORCHESTRATOR / judge — strong tier
+  default: "DeepSeek-V4-Pro-0813"      # ORCHESTRATOR / judge — strong tier
   provider: "nous"                          # your provider (nous Portal / openrouter / direct key)
 
 delegation:
-  model: "deepseek/deepseek-v4-flash"      # ACTORS / sub-agents — fast tier
+  model: "DeepSeek-V4-Flash-0731"      # ACTORS / sub-agents — fast tier
   provider: "nous"
 
 auxiliary:                                  # side tasks (summarize/compress)
   compression: { provider: "auto", model: "" }   # "auto" = main; set flash to save credits
 ```
 
-Or from the CLI: `hermes config set model deepseek/deepseek-v4-pro` and
-`hermes config set delegation.model deepseek/deepseek-v4-flash`. Secrets route to
+Or from the CLI: `hermes config set model DeepSeek-V4-Pro-0813` and
+`hermes config set delegation.model DeepSeek-V4-Flash-0731`. Secrets route to
 `~/.hermes/.env`, the rest to `config.yaml`. Use the exact model IDs your
 provider/Portal exposes (`hermes models`).
 

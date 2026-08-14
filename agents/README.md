@@ -1,7 +1,7 @@
 # agents/ — the actor roster
 
 These are Helix's **actors**: the specialty hunters the orchestrator dispatches
-in parallel to the fast tier (Sonnet 5 max / deepseek-v4-flash). Each owns a
+in parallel to the fast tier (Sonnet 5 max / DeepSeek-V4-Flash-0731). Each owns a
 cluster of bug classes, hunts only its lens over only the scoped surface, and
 returns **raw findings** — hypotheses, never verdicts. The orchestrator (strong
 tier) converges, gates, verifies, and reports. The pattern: one specialty file
@@ -41,7 +41,7 @@ actors. Depth is the default; it is never *all actors on every target regardless
 
 ¹ The two deep-logic engines live in `skills/` (also standalone-invokable via
 `/feynman` and `/state-audit`) but dispatch exactly like actors. On a capable fast
-tier they run there; on deepseek-v4-flash they route **up to deepseek-v4-pro** —
+tier they run there; on DeepSeek-V4-Flash-0731 they route **up to DeepSeek-V4-Pro-0813** —
 flash under-performs on first-principles logic (`references/model-profiles.md`).
 They run on **web backend logic too** when source is in scope, not just contracts.
 

@@ -77,12 +77,12 @@ to your strong tier and the delegation model to your fast tier in
 
 ```yaml
 model:
-  default: "deepseek/deepseek-v4-pro"      # ORCHESTRATOR / judge — the strong tier
+  default: "DeepSeek-V4-Pro-0813"      # ORCHESTRATOR / judge — the strong tier
   provider: "nous"                          # your provider: nous (Portal) / openrouter / a direct key
   base_url: null
 
 delegation:
-  model: "deepseek/deepseek-v4-flash"      # ACTORS / sub-agents — the fast tier
+  model: "DeepSeek-V4-Flash-0731"      # ACTORS / sub-agents — the fast tier
   provider: "nous"
 
 auxiliary:                                  # side tasks (summarize, compress) — keep them cheap
@@ -95,8 +95,8 @@ Or set them from the CLI (secrets auto-route to `~/.hermes/.env`, the rest to
 `config.yaml`):
 
 ```bash
-hermes config set model deepseek/deepseek-v4-pro
-hermes config set delegation.model deepseek/deepseek-v4-flash
+hermes config set model DeepSeek-V4-Pro-0813
+hermes config set delegation.model DeepSeek-V4-Flash-0731
 ```
 
 Use the exact model IDs and provider name your Portal/provider exposes (check with
@@ -116,7 +116,7 @@ either per-dispatch or session-wide with `CLAUDE_CODE_SUBAGENT_MODEL`.
 > specifically want to run the Claude Code CLI but pointed at DeepSeek, that's a
 > Claude-Code env-var config, unrelated to Hermes:
 > `ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic`,
-> `ANTHROPIC_MODEL=deepseek-v4-pro`, `CLAUDE_CODE_SUBAGENT_MODEL=deepseek-v4-flash`
+> `ANTHROPIC_MODEL=DeepSeek-V4-Pro-0813`, `CLAUDE_CODE_SUBAGENT_MODEL=DeepSeek-V4-Flash-0731`
 > (plus your `ANTHROPIC_AUTH_TOKEN`). Most DeepSeek users should just use Hermes
 > above instead.
 

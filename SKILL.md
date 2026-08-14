@@ -212,7 +212,7 @@ not from ranking models against each other.
 
 | Harness | How Helix runs |
 |---|---|
-| **DeepSeek / Hermes** (primary) | Orchestrator on `deepseek-v4-pro`, fast actors on `deepseek-v4-flash` (deep-logic engines route up to pro — see `references/model-profiles.md`). With only one model, the alternating loop still gives adversarial rigor: Feynman and State interrogate the same code from different angles, each seeded by the other's gaps. The **learning loop** (`references/learning-loop.md`) is tuned for Hermes — it persists confirmed patterns and false-positive lessons to `memory/` so each engagement compounds. |
+| **DeepSeek / Hermes** (primary) | Orchestrator on `DeepSeek-V4-Pro-0813`, fast actors on `DeepSeek-V4-Flash-0731` (deep-logic engines route up to pro — see `references/model-profiles.md`). With only one model, the alternating loop still gives adversarial rigor: Feynman and State interrogate the same code from different angles, each seeded by the other's gaps. The **learning loop** (`references/learning-loop.md`) is tuned for Hermes — it persists confirmed patterns and false-positive lessons to `memory/` so each engagement compounds. |
 | **Claude Code** | Same skill, same files. Orchestrator on Opus 4.8, actors on Sonnet 5 (max). If the harness can fan out sub-agents, the actors dispatch in parallel; if not, they run sequentially. A Burp MCP bridge and other MCP tools bind automatically when present. |
 
 Nothing in Helix requires Python to run. The scripts are optional tool
@@ -227,18 +227,18 @@ the strong tier judges (**discoverer ≠ verifier**). Full mapping and per-harne
 setup: `references/model-profiles.md`.
 
 ```
-STRONG TIER — orchestrator / judge   (Opus 4.8 · deepseek-v4-pro)
+STRONG TIER — orchestrator / judge   (Opus 4.8 · DeepSeek-V4-Pro-0813)
    intake · hit list · dispatch · CROSSOVER · CONVERGENCE/dedup · THE GATE · verify · report
         │  dispatches, each with a bundle (case card + source + methodology +
         │  shared-rules + the one agent file), in parallel
         ▼
-FAST TIER — actors → RAW findings    (Sonnet 5 max · deepseek-v4-flash)
+FAST TIER — actors → RAW findings    (Sonnet 5 max · DeepSeek-V4-Flash-0731)
    web:   recon · access-control · injection · client-side · business-logic
           + graphql · supply-chain                          (deep)
    web3:  economic · math · access-upgrade · integration
           + invariant · execution-trace · periphery · gap-hunter×3   (deep)
         ▼
-DEEP-LOGIC TIER — the loop           (Sonnet 5 max · deepseek-v4-PRO)
+DEEP-LOGIC TIER — the loop           (Sonnet 5 max · DeepSeek-V4-Pro-0813)
    skills/feynman-auditor ↔ skills/state-inconsistency-auditor
    run on contracts AND on web backend logic (any language) when source is in scope
 ```

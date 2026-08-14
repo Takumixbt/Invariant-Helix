@@ -61,7 +61,7 @@ The rules that make findings trustworthy instead of just plausible-sounding.
 | `references/methodology.md` | The reasoning engine: three mental tools (Feynman, Socratic, Inversion) plus the alternating Feynman↔State loop — real adversarial rigor from one model, no bigger model required to check it. |
 | `references/judging.md` | The gate. Four sequential rounds every finding must survive: Refutation, Reachability, Trigger, Impact. Fail one and it's rejected or demoted to a lead. This file is why Helix doesn't report noise. |
 | `references/convergence.md` | The dedup pipeline that runs after a deep swarm of actors returns findings — merges four actors flagging the same bug four ways into one high-confidence finding. |
-| `references/model-profiles.md` | Maps the orchestrator/actor roles onto real models on your harness (Opus↔Sonnet on Claude Code, deepseek-v4-pro↔flash on Hermes) so discovery and verification are never the same pass. |
+| `references/model-profiles.md` | Maps the orchestrator/actor roles onto real models on your harness (Opus↔Sonnet on Claude Code, DeepSeek-V4-Pro-0813↔DeepSeek-V4-Flash-0731 on Hermes) so discovery and verification are never the same pass. |
 | `references/failure-modes.md` | Helix auditing itself. Fourteen ways an agent running this skill can quietly fail, each with its failsafe, plus preflight and release checklists. Read this once before a real engagement. |
 
 ---

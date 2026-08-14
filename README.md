@@ -113,9 +113,9 @@ Invariant-Helix/
     ├── patterns.jsonl · false-positives.jsonl · engagements.jsonl · README.md
 ```
 
-**How it runs:** a **strong-tier orchestrator** (Opus 4.8 · deepseek-v4-pro) does
+**How it runs:** a **strong-tier orchestrator** (Opus 4.8 · DeepSeek-V4-Pro-0813) does
 intake, dispatch, crossover synthesis, convergence/dedup, the gate, and the report;
-**fast-tier actors** (Sonnet 5 max · deepseek-v4-flash) hunt every lens in parallel
+**fast-tier actors** (Sonnet 5 max · DeepSeek-V4-Flash-0731) hunt every lens in parallel
 and return raw findings; the **deep-logic loop** (feynman ↔ state) runs on
 contracts and web backend logic alike. Discoverer ≠ verifier. Runs **deep by
 default** (full roster — 15 hunters + the loop), `--quick` for the core only.
