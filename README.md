@@ -18,6 +18,10 @@ finding, and hands you a platform-ready or Notion in-house report. Built for the
 **DeepSeek/Hermes** harness and **Claude Code**. Language-agnostic. No runtime
 required.
 
+New here? **[`docs/FIELD-GUIDE.md`](docs/FIELD-GUIDE.md)** walks through every
+file below in plain language. **[`INSTALL.md`](INSTALL.md)** has the exact
+install command for every tool, for Linux/macOS/WSL and native PowerShell.
+
 ---
 
 ## What it does
@@ -74,9 +78,11 @@ external tools are the operator's own install.
 Invariant-Helix/
 ├── SKILL.md                 # the controller: intake → strands → crossover → report → learn
 ├── AGENTS.md                # how an agent installs, boots, and operates Helix
-├── INSTALL.md               # tiered setup (Hermes/Claude Code · Burp · WSL · tools)
+├── INSTALL.md               # tiered setup + per-tool commands (Linux/macOS/WSL + PowerShell)
 ├── CHANGELOG.md · VERSION · LICENSE
 ├── README.md                # this file
+├── docs/
+│   └── FIELD-GUIDE.md       # a walkthrough of every component, in plain language
 ├── references/
 │   ├── shared-rules.md      # the contract every actor obeys (format · CWE · severity · anti-hallucination)
 │   ├── methodology.md       # Feynman/Socratic/Inversion + the alternating loop + the uncertainty ladder

@@ -328,6 +328,7 @@ for the phase you are in.
 - `references/cvss-guide.md` — CVSS 3.1 vectors and scoring.
 - `references/local-tooling.md` — the tool roster, Burp (+MCP), and PowerShell→WSL routing.
 - `AGENTS.md` — how an agent installs, boots, and operates Helix; the host-capability contract.
+- `docs/FIELD-GUIDE.md` — a plain-language walkthrough of every file in this index, for a human getting oriented.
 
 ---
 
