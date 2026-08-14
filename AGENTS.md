@@ -32,12 +32,18 @@ git clone <this-repo-url> ~/.claude/skills/invariant-helix
 Per-project instead: clone into `<project>/.claude/skills/invariant-helix/`.
 Invoke with `/helix <link>`, `/feynman`, or `/state-audit`.
 
-### DeepSeek / Hermes (or any agent runtime that loads instruction files)
+### Hermes Agent (Nous)
+Clone Helix into `~/.hermes/skills/invariant-helix/`, and point the agent at its
+controller from `~/.hermes/SOUL.md` (slot #1 of the system prompt) or a project
+`.hermes.md`: "operate as the Invariant Helix skill — follow
+`~/.hermes/skills/invariant-helix/SKILL.md`." Model tiering is native: set the
+main model (orchestrator) and the `delegation` model (actors) in
+`~/.hermes/config.yaml` — see `INSTALL.md` Tier 0.5 and `references/model-profiles.md`.
+
+### Any other agent runtime that loads instruction files
 Place this repository where your runtime reads skills or system instructions, and
 point the runtime's entry instruction at `SKILL.md`. Any runtime that can (a) read
-files, (b) call tools, and (c) ideally dispatch sub-agents can operate Helix. See
-the harness env setup in `INSTALL.md` (Tier 0.5) and the role→model mapping in
-`references/model-profiles.md`.
+files, (b) call tools, and (c) ideally dispatch sub-agents can operate Helix.
 
 ### Generic agent (custom loop / SDK)
 1. Load `SKILL.md` as the top-level instruction for the orchestrator role.

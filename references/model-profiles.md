@@ -64,30 +64,35 @@ orchestrator, not the fast actors.
 
 ## How each harness actually sets it
 
-### DeepSeek / Hermes (via the Claude CLI bridge)
+### Hermes Agent (the native path)
 
-The env pattern: the orchestrator model is `ANTHROPIC_MODEL`; sub-agents inherit
-`CLAUDE_CODE_SUBAGENT_MODEL`.
+Hermes has a first-class **delegation model** for sub-agents, so the split is a
+few lines of `~/.hermes/config.yaml`: the main model is the orchestrator, the
+delegation model is the actors.
 
-```bash
-export ANTHROPIC_MODEL=deepseek-v4-pro            # orchestrator / judge
-export ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro
-export ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v4-pro
-export CLAUDE_CODE_SUBAGENT_MODEL=deepseek-v4-flash   # fast actors
-export CLAUDE_CODE_EFFORT_LEVEL=max
+```yaml
+model:
+  default: "deepseek/deepseek-v4-pro"      # ORCHESTRATOR / judge — strong tier
+  provider: "nous"                          # your provider (nous Portal / openrouter / direct key)
+
+delegation:
+  model: "deepseek/deepseek-v4-flash"      # ACTORS / sub-agents — fast tier
+  provider: "nous"
+
+auxiliary:                                  # side tasks (summarize/compress)
+  compression: { provider: "auto", model: "" }   # "auto" = main; set flash to save credits
 ```
 
-For the deep-logic-on-pro routing: when the orchestrator dispatches the feynman
-or state engine, it dispatches them as **orchestrator-tier work** (runs them
-itself or with the pro model), not as flash sub-agents. In practice: don't spawn
-feynman/state as `CLAUDE_CODE_SUBAGENT_MODEL` sub-agents on DeepSeek — run them
-inline on the pro orchestrator, and reserve the flash sub-agents for the breadth
-lenses.
+Or from the CLI: `hermes config set model deepseek/deepseek-v4-pro` and
+`hermes config set delegation.model deepseek/deepseek-v4-flash`. Secrets route to
+`~/.hermes/.env`, the rest to `config.yaml`. Use the exact model IDs your
+provider/Portal exposes (`hermes models`).
 
-If your Hermes runtime dispatches sub-agents by its own mechanism rather than the
-Claude CLI env vars, map the same two roles onto whatever it exposes: the
-orchestrator prompt/model for planning+judging, the worker prompt/model for the
-parallel lenses.
+**Keep the deep-logic loop on the main (pro) model, not the delegation (flash)
+tier.** The orchestrator runs Feynman/State, `invariant-agent`, and
+`execution-trace-agent` itself (or dispatches them at main-model tier); the flash
+delegation model carries the breadth actors. Flash is fine for recon and
+mechanical lens sweeps, weak for first-principles logic.
 
 ### Claude Code
 

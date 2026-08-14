@@ -27,14 +27,31 @@ Or per-project: clone into `<project>/.claude/skills/invariant-helix/`.
 
 Invoke with `/helix <link>`, `/feynman`, or `/state-audit`.
 
-### DeepSeek / Hermes harness
+### Hermes Agent (Nous)
 
-Place the repo where your Hermes agent runtime reads skills/instructions (the
-same location it loads other skill markdown from), or point the runtime at
-`SKILL.md` as the entry instruction. The skill is plain markdown + JSONL — any
-harness that can read files and call tools runs it.
+Hermes is Nous Research's open-source autonomous CLI. Install it, then load Helix
+into its skills directory:
 
-That's the whole core install. You can audit right now.
+```bash
+pip install hermes-agent          # the Nous Hermes CLI
+hermes setup --portal             # OAuth into Nous Portal (credits), or configure your own keys
+
+# load Helix as a Hermes skill
+git clone https://github.com/Takumixbt/Invariant-Helix.git ~/.hermes/skills/invariant-helix
+```
+
+Hermes reads skills from `~/.hermes/skills/`. To make Helix the operating
+instruction for an engagement, point the agent at its controller — add a line to
+`~/.hermes/SOUL.md` (slot #1 of the system prompt) or a project-level
+`.hermes.md`:
+
+```markdown
+When auditing, operate as the Invariant Helix skill: follow
+~/.hermes/skills/invariant-helix/SKILL.md end to end.
+```
+
+That's the whole core install. Model selection and the orchestrator/actor tiering
+are Tier 0.5 below — on Hermes they're a few lines of `~/.hermes/config.yaml`.
 
 ### Any other agent runtime
 
@@ -44,44 +61,69 @@ confirm it loaded.
 
 ---
 
-## Tier 0.5 — Running Helix on DeepSeek via the Claude CLI (optional bridge)
+## Tier 0.5 — Model tiering (orchestrator / actor)
 
-If you want to drive Claude Code's harness but with DeepSeek behind it (single
-key, `deepseek-v4-flash`/`-pro`), export these before starting the CLI:
+Helix runs a strong-tier **orchestrator** (intake, dispatch, crossover, the gate,
+verify, report) and fast-tier **actors** (the parallel lens hunters). When your
+harness lets you set a different model for sub-agents than for the main agent, you
+get the discoverer≠verifier split for free. Both harnesses support it — the
+mechanism just differs. Full role→model mapping: `references/model-profiles.md`.
+
+### Hermes Agent (this is the native path)
+
+Hermes has a first-class **delegation model** for sub-agents. Set the main model
+to your strong tier and the delegation model to your fast tier in
+`~/.hermes/config.yaml`:
+
+```yaml
+model:
+  default: "deepseek/deepseek-v4-pro"      # ORCHESTRATOR / judge — the strong tier
+  provider: "nous"                          # your provider: nous (Portal) / openrouter / a direct key
+  base_url: null
+
+delegation:
+  model: "deepseek/deepseek-v4-flash"      # ACTORS / sub-agents — the fast tier
+  provider: "nous"
+
+auxiliary:                                  # side tasks (summarize, compress) — keep them cheap
+  compression:
+    provider: "auto"                        # "auto" = main model; set to flash to save credits
+    model: ""
+```
+
+Or set them from the CLI (secrets auto-route to `~/.hermes/.env`, the rest to
+`config.yaml`):
 
 ```bash
-export ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
-export ANTHROPIC_MODEL=deepseek-v4-pro
-export ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro
-export ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v4-pro
-export ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash
-export CLAUDE_CODE_SUBAGENT_MODEL=deepseek-v4-flash
-export CLAUDE_CODE_EFFORT_LEVEL=max
-export ANTHROPIC_AUTH_TOKEN="your-deepseek-token"
+hermes config set model deepseek/deepseek-v4-pro
+hermes config set delegation.model deepseek/deepseek-v4-flash
 ```
 
-PowerShell (identical variables, PowerShell syntax):
+Use the exact model IDs and provider name your Portal/provider exposes (check with
+`hermes models` or the Portal UI). With Nous Portal you authenticate once via
+`hermes setup --portal` and credits route to whichever model you pick — no
+per-key export needed. Keep the **deep-logic loop (Feynman/State, invariant,
+execution-trace) on the main pro model**, not the flash delegation tier — let
+delegation carry the breadth actors (`references/model-profiles.md`).
 
-```powershell
-$env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
-$env:ANTHROPIC_MODEL = "deepseek-v4-pro"
-$env:ANTHROPIC_DEFAULT_OPUS_MODEL = "deepseek-v4-pro"
-$env:ANTHROPIC_DEFAULT_SONNET_MODEL = "deepseek-v4-pro"
-$env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "deepseek-v4-flash"
-$env:CLAUDE_CODE_SUBAGENT_MODEL = "deepseek-v4-flash"
-$env:CLAUDE_CODE_EFFORT_LEVEL = "max"
-$env:ANTHROPIC_AUTH_TOKEN = "your-deepseek-token"
-```
+### Claude Code
 
-These only last the session unless added to your shell profile
-(`~/.zshrc`/`~/.bashrc`, or the PowerShell `$PROFILE` file).
+The orchestrator is the main session model — set it to Opus 4.8 (`/model opus`).
+Sub-agents (actors) are dispatched via the Task tool; set their model to Sonnet 5,
+either per-dispatch or session-wide with `CLAUDE_CODE_SUBAGENT_MODEL`.
 
-> **Honest note on model tiers.** Helix does **not** rely on a big model
-> verifying a small model's work. On a single key every role is the same
-> model, and that's fine — rigor comes from the **alternating loop** and
-> **independent falsification at the gate**, not from model ranking. The
-> `SUBAGENT_MODEL`/`OPUS`/`HAIKU` names above are provenance labels for the
-> harness, not a real tier hierarchy on a single key.
+> **Optional — DeepSeek *behind* Claude Code** (not the Hermes path). If you
+> specifically want to run the Claude Code CLI but pointed at DeepSeek, that's a
+> Claude-Code env-var config, unrelated to Hermes:
+> `ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic`,
+> `ANTHROPIC_MODEL=deepseek-v4-pro`, `CLAUDE_CODE_SUBAGENT_MODEL=deepseek-v4-flash`
+> (plus your `ANTHROPIC_AUTH_TOKEN`). Most DeepSeek users should just use Hermes
+> above instead.
+
+> **On a single model** (no distinct delegation tier available): the split
+> collapses harmlessly. Rigor still comes from the **alternating loop** and
+> **independent falsification at the gate**, not from model ranking. The tiers
+> are an upgrade when you have them, never a requirement.
 
 ---
 
