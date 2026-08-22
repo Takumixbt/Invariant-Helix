@@ -1,0 +1,4 @@
+
+# per-engagement working dumps — never commit these to the skill repo
+.audit/
+.audit-*/

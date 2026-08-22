@@ -166,6 +166,21 @@ contract can simply be called directly, bypassing the web2 gate entirely.
 
 ---
 
+## Evidence for the client-side seams (4, 5, 6) — live browser, not static read
+
+Seams 4, 5, and 6 attack artifacts that exist only inside a running browser:
+the tx-building JS, the WebSocket price feed, and the SIWE/EIP-712/JWT handshake.
+These are **not visible to static recon or `curl`** — you must observe them live
+(`local-tooling.md` → `browser_dynamic`, `web-recon.md` Phase 1b). For each of
+these seams, the crossover's evidence is a **live-browser observation**:
+
+- Seam 4 — the actual `to`/`data`/`value` the client JS builds, and what code can rewrite it (feed the XSS/supply-chain finding from strand A against the *observed* tx-builder).
+- Seam 5 — the real WebSocket frames the app trusts (feed the web2 manipulation finding against the *observed* feed schema).
+- Seam 6 — the real SIWE/EIP-712/JWT handshake frames (feed the identity finding against the *observed* challenge/response).
+
+A crossover finding for these seams whose evidence is not a captured network/WS
+frame or DOM observation is a lead, not a finding.
+
 ## How the crossover runs
 
 ```

@@ -37,6 +37,15 @@ pre-audit map (the x-ray). Output `.audit/xray/system.md`.
   transitions, one-shot actions), temporal (deadlines, freshness), cross-contract
   (what it assumes about callees), economic (what makes an attack unprofitable —
   if the answer is "gas", it isn't protected).
+- **Rust/Anchor targets — run the static scan first.** `solana-scan.md`'s six
+  grep-verifiable checks (unchecked accounts missing `/// CHECK`, privileged
+  accounts unbound to a signer, under-scoped PDA seeds, CPI account confusion,
+  unvalidated `remaining_accounts`, value-moving instructions with no signer)
+  produce real, unfakeable leads before any actor opens a file. Write the lead
+  list and the two coverage counts into `.audit/xray/system.md` under a
+  `## Solana static scan` heading. Solidity targets get the equivalent rigor
+  from x-ray's entry-point grep gate; this is Solana's version of the same
+  discipline.
 
 Prime from history: pull the DeFi incident corpus and learned patterns for this
 protocol type (`knowledge.md`, `learning-loop.md`) into each actor's bundle. A

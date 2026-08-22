@@ -9,9 +9,33 @@ This is the deliberate, in-order refutation that the hunt is forbidden from
 doing (`shared-rules.md` § 0). During discovery you deepen the bug; here, and
 only here, you try to kill it.
 
+## §0 — Discoverer ≠ verifier (who is allowed to run this file)
+
+This gate is never run by the actor, pass, or lens that raised the finding.
+Concretely:
+
+- **Deep-logic loop (Feynman ↔ State):** a finding a Feynman pass raised is
+  gated by the orchestrator, not re-approved by another Feynman pass. Same for
+  State.
+- **Parallel lens actors:** the orchestrator (strong tier) runs this file over
+  every actor's output after convergence — never the actor itself, and never a
+  second instance of the same lens.
+- **Single-model / no-fanout collapse (`failure-modes.md` F4):** when the
+  harness can't dispatch separate actors, the same agent still discovers and
+  gates sequentially — but must treat them as two distinct, non-overlapping
+  passes: close the discovery context (stop trying to strengthen the finding)
+  before opening the gate context (start trying to kill it). Do not blend them
+  into one pass that "discovers cautiously."
+
+If you cannot name who discovered a finding, you cannot gate it yet — go back
+and check convergence.md first.
+
 ```
    raw finding (SUSPECT)
         │
+        ▼
+   GATE 0 ── The only question ── hedged/theoretical language? ────────► DEMOTE
+        │ clears (cheap pre-filter — see below)
         ▼
    GATE 1 ── Refutation ──── can a real guard block the exact step? ──► REJECT/DEMOTE
         │ clears
@@ -29,6 +53,31 @@ only here, you try to kill it.
 ```
 
 ---
+
+## Gate 0 — The only question that matters (a cheap pre-filter, before Gate 1)
+
+Before running the four sequential gates, ask one question of the raw finding
+as written: ***can an attacker do this right now, against a real user who took
+no unusual action, causing real harm?*** This is a one-line filter — cheaper
+than the four gates below — that exists because the single most common false
+positive isn't a wrong mechanism, it's *hedged language describing a mechanism
+that was never actually traced.* Kill on sight, before Gate 1, any finding
+whose own wording contains:
+
+```
+"could theoretically..."          "in a worst-case scenario..."
+"with the right preconditions..." "if an attacker were somehow able to..."
+"this may allow..." / "this might permit..." (without a traced path proving it does)
+"under certain conditions..." (without naming the conditions and proving they're reachable)
+a reference to dead/unreachable code presented as if it were live
+```
+
+This is not a rewording exercise — a finding using this language usually means
+the discovery pass never actually traced attacker → guard → consequence, it
+pattern-matched a shape and described it defensively. **Demote to a LEAD and
+send it back for a real trace; do not just delete the hedge words and reclassify
+it as a finding.** A finding that survives Gate 0 still owes the full four gates
+below — this filter catches the cheap kills, it doesn't replace refutation.
 
 ## Gate 1 — Refutation
 

@@ -36,8 +36,16 @@ actors. Depth is the default; it is never *all actors on every target regardless
 | `execution-trace-agent` | end-to-end attack-path tracing, cross-contract | deep ² |
 | `periphery-agent` | libraries, hooks, init/upgrade/migration/emergency, non-obvious | deep |
 | `gap-hunter-agent` | hunts what's MISSING — 3 modes (numerical/trust/flow) | deep ³ |
+| `binding-matrix-agent` | enumerates, doesn't hunt: who authenticated each value, do asset branches agree | deep ⁴ |
 | `skills/feynman-auditor` ★ | first-principles deep logic (any language) | deep-logic ¹ |
 | `skills/state-inconsistency-auditor` ★ | coupled-state desync (any language) | deep-logic ¹ |
+
+⁴ `binding-matrix-agent` is the **coverage** actor, not a hunter — it fills the
+six-axis grid in `references/binding-matrix.md` over every instruction and reports
+the empty cells. Run it alongside the hunters, never instead of them: hunters find
+depth, the matrix finds what nobody looked at. It is the forcing function
+`convergence.md` says Helix lacks, and it emits before it filters, so expect a
+large raw pile and gate it hard.
 
 ¹ The two deep-logic engines live in `skills/` (also standalone-invokable via
 `/feynman` and `/state-audit`) but dispatch exactly like actors. On a capable fast

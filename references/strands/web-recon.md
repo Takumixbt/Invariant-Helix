@@ -54,9 +54,33 @@ this map.
 Tools bind to capability names (`local-tooling.md`); a missing tool is
 coverage-debt, never a silent skip.
 
+## Phase 1b — Live browser observation (dynamic) — REQUIRED for SPA / web3 targets
+
+Static recon maps the *discoverable* surface. It misses what only a running
+browser can show. **Any target with a client-side signer or a live frontend
+(casino, perp-DEX, bridge, marketplace, any SPA) must run this phase** before the
+hunters open — the client JS that builds/signs the tx, the WebSocket price feed,
+the SIWE handshake, and DOM/storage state are all browser-only artifacts
+(`local-tooling.md` → `browser_dynamic`).
+
+Drive the live app in a real browser (`browser_exec` / Browser Use / CDP), click
+through every real flow, and capture: **all XHR/`fetch` requests with full
+request+response, all WebSocket frames, the DOM, `localStorage`/`sessionStorage`/
+cookies, and the loaded scripts**. Write it to `.audit/recon/browser-observations.md`.
+Feed this into every hunter's bundle — this is where the *real* endpoints, request
+shapes, and client-side trust assumptions live. A web finding for such a target
+that is not backed by a live-browser observation is a lead, not a finding.
+
 ---
 
 ## Phase 2 — Hunt (dispatch the web actors in parallel)
+
+**Build the grid first (`references/web-gates.md`).** Before the actors hunt, the
+orchestrator turns the recon surface map into the endpoint grid —
+`(endpoint × method × auth-state × object)` — so the actors start from measured
+empty cells, not a cold read. This is the web equivalent of the contract
+binding-matrix, and it is what makes Strand A enumerate instead of only hunt. The
+actors below then own the confirmation of the cells the grid flags.
 
 The orchestrator fans these out to the fast tier, each with its bundle
 (`agents/README.md`). They hunt concurrently and return raw findings.

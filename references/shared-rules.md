@@ -15,6 +15,10 @@ Within the scope card:
 - You are the attacker. Deepen live findings; do not talk yourself out of them
   mid-hunt. Refutation is a **separate, later** step done deliberately at the
   gate (`judging.md`), not a reflex during discovery.
+- **A finding the gate kills does not vanish.** It becomes a LEAD carrying its
+  payload, its attempted trace, and whatever `chain_with:` partner might revive
+  it later — the hunt/report split cuts both ways: gates never apply mid-hunt,
+  and a gate verdict never means silent deletion.
 - The scope card is the fence. Everything you touch is checked against it.
 
 ---
@@ -29,6 +33,38 @@ Every finding must be backed by one of:
 
 No evidence → it is a **LEAD**, not a **FINDING**. Label it honestly. A lead is
 a legitimate output; a dressed-up guess is not.
+
+**Fingerprint captured artifacts.** A `file:line` citation is self-verifying —
+anyone can open the file and check it. A screenshot, HAR capture, log excerpt,
+or PoC output file is not — it can be quietly swapped or re-generated after the
+fact. For any finding whose `evidence:` field names a captured artifact rather
+than a source citation, compute its SHA-256 (`sha256sum <file>` /
+`Get-FileHash <file> -Algorithm SHA256`) and record it as `artifact:<hash>` next
+to the reference. This is one command, not a pipeline — do it inline, don't
+build tooling around it. Skip it for pure code citations; the file:line already
+does the job.
+
+**No map, no hunt.** Before any actor's first finding, five maps must exist for
+the in-scope surface — most already get built as a byproduct of Phase 0 in
+`strands/web3-audit.md` (x-ray's value stores, trust & roles, invariants) and
+`strands/web-recon.md` (the surface map); this rule makes all five mandatory
+and named, and requires every finding to cite the map node/edge it came from:
+
+```
+ASSET       what holds value — funds, shares, data, sessions, admin capability
+TRUST       who is trusted to do what — roles, signers, admins, service accounts
+IDENTITY    how a caller proves who they are — auth, signatures, sessions, keys
+STATE       what must stay consistent — the coupled pairs, invariants, balances
+CAPABILITY  what an action, once taken, lets the actor do next
+```
+
+Every finding's `evidence:` field, in addition to the code/traffic/PoC citation
+above, names the map node or edge it exploits — `map: TRUST(admin) × ASSET(vault)`
+or `map: IDENTITY(session) → CAPABILITY(admin-panel)`. A finding that can't be
+stated as a map location is not yet mature enough to report; go build the map
+node first, then the finding. This is a stricter, more traceable version of
+"evidence or silence" for exactly the class of finding that sounds plausible in
+isolation but doesn't actually connect to where value or trust sits.
 
 ---
 
@@ -87,6 +123,7 @@ FINDING
   poc: |
     <minimal runnable PoC — Foundry test, curl sequence, or script>
   evidence:    <file:line list | request/response ref | test name>
+  map_ref:     <the map node/edge this exploits — ASSET/TRUST/IDENTITY/STATE/CAPABILITY>
   fix:         <specific, line-level remediation>
   chain_with:  <finding id(s) this combines with, if any>
   source_ref:  <post-mortem / disclosed report / learned pattern that seeded it>
@@ -211,6 +248,9 @@ requires large capital −1, bounded/dust impact −1, admin-only trigger → de
 6. **Platform awareness.** Calibrate severity to the named program's policy.
 7. **No invented facts.** Not visible in scope → say so.
 8. **Ground before you guess.** Before generating a hypothesis for a surface, check the knowledge corpus and learned memory (`knowledge.md`, `learning-loop.md`) — is there a real precedent for this bug on this stack? A match is a lead, never a proof.
+9. **Discoverer ≠ verifier.** The actor (or pass) that raised a finding never runs its own gate. See `judging.md` §0 — this is enforced by *who* executes the gate, not by asking the same actor to be more skeptical of itself.
+10. **Time-box the hunt.** Neither Helix nor a human hunter has infinite budget, and nothing above stops an actor from rabbit-holing a dead lead. Two hard clocks: **5 minutes** with no signal on a surface → switch surfaces, not targets (a quiet endpoint stays quiet; move to the next one, come back later if time allows). **1 hour** stuck on one hypothesis with no progress toward REACHABLE → switch context entirely (a different function, a different actor's lens) rather than deepen the same dead end. Log the abandoned lead with its next step; don't just drop it silently.
+11. **Prefer less-saturated classes when the budget is tight.** XSS, SSRF, and XXE are the most-hunted classes on any program — high competition, most of the easy ones already found. Cache-poisoning, race conditions, CI/CD exposure, and business-logic chains are structurally under-hunted (they require more setup, so fewer hunters bother) and pay disproportionately when found. When time is scarce, this is a real prioritization signal, not just a coverage nicety.
 
 ---
 
@@ -232,6 +272,33 @@ The highest-value signal is **chain**: "my bug + your bug = critical." The
 crossover strand is built entirely on cross-strand chain signals — a web finding
 that grants power on-chain, or vice versa. Every strand should emit a `chain`
 signal the moment its finding touches the other strand's surface.
+
+**Same-domain chaining (the crossover strand only covers the web2↔web3 seam —
+this table is for chains within one strand, which is where most chained bugs
+actually live).** Pre-enumerated A+B patterns, so an actor recognizes a chain
+opportunity instead of reporting the low half alone and moving on:
+
+| A | + B | = |
+|---|---|---|
+| idor (read) | idor (write, sibling verb) | full record control |
+| open-redirect | oauth-bypass (redirect_uri) | account takeover |
+| ssrf | cloud metadata reachable | infra credential exfil |
+| xss-stored | no `HttpOnly` on session cookie | account takeover |
+| cache-poisoning | any reflected input | mass client compromise |
+| subdomain-takeover | shared-cookie-domain auth | session theft |
+| access-control-bypass (web3, low-priv role) | that role reads a value another function trusts | privilege escalation chain |
+| donation-inflation | no deploy-time seed | first-depositor drain |
+| reentrancy window | a coupled-state read mid-window | state-inconsistency compound |
+
+A chain in this table is a **prompt to hunt further**, never a substitute for
+proving both halves — a real B still needs its own evidence. When an actor's
+finding matches the A-column shape, its next move (before writing the finding
+up) is the same 6 steps every time: **(1) confirm A is real** (traced, not
+assumed) **(2) map the siblings** — every endpoint/function/path that does the
+same thing A's target does **(3) test each sibling** for the B half **(4) chain**
+the confirmed pair with `chain_with:` **(5) quantify** the combined impact with
+real numbers, not "critical" as an adjective **(6) report** the chain as one
+finding, severity set to the combined impact, not either half's alone.
 
 ---
 

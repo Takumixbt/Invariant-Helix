@@ -1,13 +1,25 @@
 ```
-    ╔══════════════════════════════════════════════════════════════╗
-    ║              I N V A R I A N T   H E L I X                    ║
-    ║          two strands, one target. nothing survives both.     ║
-    ╚══════════════════════════════════════════════════════════════╝
+██╗███╗   ██╗██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ███╗   ██╗████████╗
+██║████╗  ██║██║   ██║██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║╚══██╔══╝
+██║██╔██╗ ██║██║   ██║███████║██████╔╝██║███████║██╔██╗ ██║   ██║
+██║██║╚██╗██║╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██║╚██╗██║   ██║
+██║██║ ╚████║ ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██║ ╚████║   ██║
+╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝
+        ██╗  ██╗███████╗██╗     ██╗██╗  ██╗
+        ██║  ██║██╔════╝██║     ██║╚██╗██╔╝
+        ███████║█████╗  ██║     ██║ ╚███╔╝
+        ██╔══██║██╔══╝  ██║     ██║ ██╔██╗
+        ██║  ██║███████╗███████╗██║██╔╝ ██╗
+        ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝
+
+   v1.2.0   ·   any chain · any language · any surface
+   enumerate what others hunt   ·   verify what others assume
+   scope decides · pin the artifact · evidence or silence
 ```
 
 # Invariant Helix
 
-A complete, peak bug-hunting skill for **any** target — a web app, an API, a
+A complete bug-hunting skill for **any** target — a web app, an API, a
 Solidity/Move/Rust protocol, or a system that is all three at once. Helix is a
 **double helix**: two full audit strands that run independently and then cross.
 Most tools do one strand. The bugs that pay the most live where the two touch.
@@ -18,8 +30,8 @@ finding, and hands you a platform-ready or Notion in-house report. Built for the
 **DeepSeek/Hermes** harness and **Claude Code**. Language-agnostic. No runtime
 required.
 
-New here? **[`docs/FIELD-GUIDE.md`](docs/FIELD-GUIDE.md)** walks through every
-file below in plain language. **[`INSTALL.md`](INSTALL.md)** has the exact
+New here? `[docs/FIELD-GUIDE.md](docs/FIELD-GUIDE.md)` walks through every
+file below in plain language. `[INSTALL.md](INSTALL.md)` has the exact
 install command for every tool, for Linux/macOS/WSL and native PowerShell.
 
 ---
@@ -33,18 +45,18 @@ install command for every tool, for Linux/macOS/WSL and native PowerShell.
 ```
 
 - **Strand A — Web / API full recon audit.** Surface mapping (subdomains,
-  endpoints, JS, secrets, fingerprint), then the hunt across every web class:
-  IDOR, auth/JWT/OAuth, SSRF, injection, business logic, race, smuggling, CORS,
-  cache poisoning, account takeover. The sibling rule — "same op done two ways,
-  one is wrong" — drives ~30% of paid findings.
+endpoints, JS, secrets, fingerprint), then the hunt across every web class:
+IDOR, auth/JWT/OAuth, SSRF, injection, business logic, race, smuggling, CORS,
+cache poisoning, account takeover. The sibling rule — "same op done two ways,
+one is wrong" — drives ~30% of paid findings.
 - **Strand B — Smart Contract / Web3 full audit.** x-ray recon → the **alternating
-  loop** (Feynman ↔ State-Inconsistency, run back and forth to convergence) → the
-  web3 lens catalog (economic/oracle, precision, access, reentrancy), every
-  hypothesis grounded in real historical exploits.
+loop** (Feynman ↔ State-Inconsistency, run back and forth to convergence) → the
+web3 lens catalog (economic/oracle, precision, access, reentrancy), every
+hypothesis grounded in real historical exploits.
 - **The Crossover — the intertwine.** After both strands run, Helix hunts the
-  seam where web2 drives web3: a web admin panel that holds a minter key, an API
-  that triggers an on-chain drain, a leaked `.env` that's also a validator key, a
-  frontend that builds the tx you sign. Neither strand alone sees these.
+seam where web2 drives web3: a web admin panel that holds a minter key, an API
+that triggers an on-chain drain, a leaked `.env` that's also a validator key, a
+frontend that builds the tx you sign. Neither strand alone sees these.
 
 Every finding passes a four-gate judge (**refutation → reachability → trigger →
 impact**), climbs the uncertainty ladder (SUSPECT → REACHABLE → CONFIRMED) only
@@ -60,12 +72,12 @@ Four capabilities fuse in one skill, which is what makes it peak:
 
 - **Recall** — aggressive, concrete attacker lenses across web and web3.
 - **Memory** — every hypothesis pattern-matched against real historical exploits
-  and disclosed reports, plus what Helix itself has confirmed before.
+and disclosed reports, plus what Helix itself has confirmed before.
 - **Real tools** — crawlers, proxies, fuzzers, and chain tooling bound to
-  capability names and degraded to coverage-debt when absent.
+capability names and degraded to coverage-debt when absent.
 - **Discipline** — evidence gates, an independent verifier, a hard raw→verified
-  boundary, and a **self-audit** (`references/failure-modes.md`) that names the
-  skill's own loopholes and the failsafe for each — so it can't quietly fool itself.
+boundary, and a **self-audit** (`references/failure-modes.md`) that names the
+skill's own loopholes and the failsafe for each — so it can't quietly fool itself.
 
 Grounding raises recall; the gate keeps the proof bar high. Nothing is vendored —
 external tools are the operator's own install.

@@ -20,16 +20,19 @@ section). Helix says what it couldn't check.
 | `http_crawl` | an **adaptive crawler** (JS-rendered, XHR capture) | `ffuf`/`gobuster` + JS parsing | manual endpoint list |
 | `input_mutation` | `ffuf`, `wfuzz` | scripted `curl` loops | debt (no param fuzzing) |
 | `secret_scan` | `trufflehog`, `gitleaks` | grep JS/`.env`/`.git` | manual JS read |
-| `proxy_observation` | **Burp via MCP** (site map, history) | `mitmproxy` | debt (no proxy view) |
-| `request_replay` | **Burp Repeater** (via MCP) | scripted `curl` | scripted `curl` |
-| `active_scan` | Burp active scan | `nuclei` | debt (passive only) |
-| `oob_observation` | Burp Collaborator | `interactsh` | debt (no blind-vuln confirmation) |
+| `proxy_observation` | **`mitmproxy`** ✓ (Burp via MCP if wired) | scripted capture | debt (no proxy view) |
+| `browser_dynamic` | **harness live-browser + DevTools (Browser Use / CDP)** | manual browser JS | debt (no live-app view) |
+| `request_replay` | scripted `curl` / mitmproxy | Burp Repeater if wired | scripted `curl` |
+| `active_scan` | **`nuclei`** ✓ | Burp active scan if wired | debt (passive only) |
+| `oob_observation` | **`interactsh-client`** ✓ | Burp Collaborator if wired | debt (no blind-vuln confirmation) |
 | `sqli_test` | `sqlmap` | manual payloads | manual (active gate required) |
-| `port_scan` | `nmap` | `masscan` | debt |
-| `contract_read` | `cast`, block explorer | web3 RPC call | debt |
-| `poc_evm` | **Foundry** (`forge`) | Hardhat | debt (finding stays REACHABLE, not CONFIRMED) |
-| `property_fuzzing` | `echidna`, `medusa` | Foundry invariant tests | debt (no fuzz coverage) |
-| `static_analysis` | `slither` (context-filtered) | manual read | manual read |
+| `port_scan` | **`nmap`** ✓ | `masscan` | debt |
+| `contract_read` | **`cast`** ✓, block explorer | web3 RPC call | debt |
+| `poc_evm` | **Foundry** (`forge`/`anvil`) ✓ | Hardhat | debt (finding stays REACHABLE, not CONFIRMED) |
+| `property_fuzzing` | **`echidna`, `medusa`** ✓ | Foundry invariant tests | debt (no fuzz coverage) |
+| `static_analysis` (EVM) | **`slither`** ✓ (context-filtered) | manual read | manual read |
+| `sast_source` (backend) | **`semgrep`** ✓ (`--config auto`, filter to reachable) | grep §BACKEND gate | the §BACKEND grep gate |
+| `content_discovery` | **`ffuf`** ✓ | `gobuster` | manual endpoint list |
 
 **Active-testing capabilities** (`active_scan`, `sqli_test`, `port_scan`,
 brute-force, any on-chain state change on mainnet) require the scope card to
@@ -39,6 +42,21 @@ these stay off and are recorded as intentional non-coverage, not debt.
 Detect what's present at engagement start (a quick `command -v` / `where` sweep
 of the roster), write the available-vs-absent map into `.audit/tooling.md`, and
 let the lenses route against it.
+
+**Confirmed present on this operator's host** (verified 2026-08-21, so these are
+adapters, not debt): `interactsh-client` (OOB — the one that confirms blind
+SSRF/XXE/RCE), `mitmproxy`, `ffuf`, `nmap`, `nuclei`, `semgrep`, `slither`,
+`echidna`, `medusa`, and Foundry (`cast`/`anvil`/`forge`). Burp is **not** wired,
+and it does not need to be: every capability it would serve has a present
+fallback above. The one thing to still stand up per web engagement is an
+`interactsh-client` session (`interactsh-client -v`), because blind-vuln
+confirmation is gated and unprovable without it — see `web-gates.md`.
+
+`semgrep` is the SAST engine for the §BACKEND source gate (`vm-gates.md`): run
+`semgrep --config auto` for the framework's route/authz/injection rules, then
+**filter its output through the same VERIFY gate as everything else** — semgrep is
+a lead generator, not a finding source, and its default ruleset over-reports.
+Treat a semgrep hit exactly like a grep hit: a shape to trace, not a bug to file.
 
 ---
 
@@ -84,7 +102,28 @@ become coverage-debt.
 
 ---
 
-## PowerShell → WSL routing (Windows operators)
+## Browser / DevTools dynamic analysis — the primary tool for SPA & web3 frontends
+
+For any target whose frontend does real work in the browser — **casino, perp-DEX,
+bridge, marketplace, any web3 app** — the highest-value web findings live in code
+`curl`, `ffuf`, and even Burp's proxy **cannot see**:
+
+- the **client JS that builds and signs the transaction** the wallet signs (crossover Seam 4 — frontend injection → wallet drain);
+- the **WebSocket price/order feed** the app trusts (Seam 5 — feed manipulation → on-chain mispricing);
+- the **SIWE / EIP-712 / JWT handshake** between the web session and the on-chain identity (Seam 6);
+- **DOM state, `localStorage`, `sessionStorage`, cookies**, and every script the app actually loads (the supply-chain + secret surface static recon misses).
+
+**Method — `browser_dynamic`.** Drive the running app in a real browser (harness `browser_exec` / Browser Use; DevTools-equivalent via CDP) and observe it the way the user's browser does:
+
+1. Load the live app and click through every real flow (sign-in, deposit, trade, withdraw, claim, admin).
+2. Capture the **network surface** — every XHR/`fetch` with full request + response (headers, params, body, status), not just what a crawler finds.
+3. Capture **WebSocket frames** — the feed schema, the order flow, what the client trusts unauthenticated.
+4. Read **DOM, `localStorage`, `sessionStorage`, cookies** — client-held secrets, signing material, session tokens, permission state.
+5. List every **loaded script/service-worker** for the supply-chain + dependency-injection lens.
+
+**This is dynamic observation, not static reading.** Record `.audit/recon/browser-observations.md` — the real request/response/WS-frame/DOM list. Do not guess an endpoint or a request shape; **watch it fire.** Web findings for these targets that are not backed by a live-browser observation are leads, not findings.
+
+
 
 Most hunting tools are Linux-native. On Windows, the operator runs the harness
 from PowerShell but many tools (`ffuf`, `amass`, `sqlmap`, `nuclei`, `subfinder`,

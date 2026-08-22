@@ -166,6 +166,35 @@ new angles and never produces a report.
 rule: at the cap, everything CONFIRMED ships, everything else is a documented lead
 with its next step. Depth serves the report; it doesn't replace it.
 
+### F15 — Narrating the lifecycle instead of executing it (OBSERVED, not hypothetical)
+
+**The loophole.** This one actually happened, not a hypothetical: the orchestrator
+reads `SKILL.md`'s ten-phase lifecycle, understands the shape of it, and then
+*writes a report as if it had run* — without literally reading `judging.md`
+before gating, without literally building per-actor bundles, without literally
+dispatching separate actors. Nothing forces the mechanics; a fluent summary of
+"I did intake, I hunted, I gated" is indistinguishable from the real thing in
+plain prose. The result: findings that were never run through the anti-
+hallucination protocol (`shared-rules.md` §2) or the four gates (`judging.md`),
+because those files were referenced, not read. This is the direct cause of
+false findings shipping — not a methodology gap, an execution gap.
+
+**Failsafe.** Prose description is not a control; a printed receipt is. Every
+phase in `SKILL.md`'s lifecycle now has a literal, numbered **Turn** with exact
+tool calls (`SKILL.md` → "Orchestration — do this, in order") — modeled on
+`bounty-hunter`'s own Turn 1–7 structure, which already works on this harness.
+Concretely, before a single actor is dispatched:
+
+- The core discipline files (`shared-rules.md`, `judging.md`, `convergence.md`,
+  `methodology.md`) are **Read in full**, as explicit tool calls in Turn 1 — not
+  assumed absorbed from having read `SKILL.md`'s summary of them.
+- Every actor bundle is **mechanically concatenated** (Bash `cat` / PowerShell
+  `Get-Content`) into one file, and its **line count is printed** before
+  dispatch. A bundle you can't show the line count of wasn't actually built.
+- Every dispatched actor's spawn prompt says "read {bundle} (NNNN lines) in
+  full" — pointing at a concatenated file, never "go read these five reference
+  files" left to the actor's discretion.
+
 ### F14 — Stale state on resume
 
 **The loophole.** `--continue` resumes an engagement whose target changed (a new
@@ -175,6 +204,58 @@ that no longer exists.
 **Failsafe.** On `--continue`, re-verify the target's identity against `case.md`
 (commit hash / contract address / endpoint set). If it moved, flag it and
 re-baseline rather than continue against stale state.
+
+### F15 — Narrating the lifecycle instead of executing it (OBSERVED, not hypothetical)
+
+**The loophole.** This one actually happened, not a hypothetical: the orchestrator
+reads `SKILL.md`'s ten-phase lifecycle, understands the shape of it, and then
+*writes a report as if it had run* — without literally reading `judging.md`
+before gating, without literally building per-actor bundles, without literally
+dispatching separate actors. Nothing forces the mechanics; a fluent summary of
+"I did intake, I hunted, I gated" is indistinguishable from the real thing in
+plain prose. The result: findings that were never run through the anti-
+hallucination protocol (`shared-rules.md` §2) or the four gates (`judging.md`),
+because those files were referenced, not read. This is the direct cause of
+false findings shipping — not a methodology gap, an execution gap.
+
+**Failsafe.** Prose description is not a control; a printed receipt is. Every
+phase in `SKILL.md`'s lifecycle now has a literal, numbered **Turn** with exact
+tool calls (`SKILL.md` → "Orchestration — do this, in order") — modeled on
+`bounty-hunter`'s own Turn 1–7 structure, which already works on this harness.
+Concretely, before a single actor is dispatched:
+
+- The core discipline files (`shared-rules.md`, `judging.md`, `convergence.md`,
+  `methodology.md`) are **Read in full**, as explicit tool calls in Turn 1 — not
+  assumed absorbed from having read `SKILL.md`'s summary of them.
+- Every actor bundle is **mechanically concatenated** (Bash `cat` / PowerShell
+  `Get-Content`) into one file, and its **line count is printed** before
+  dispatch. A bundle you can't show the line count of wasn't actually built.
+- Every dispatched actor's spawn prompt says "read {bundle} (NNNN lines) in
+  full" — pointing at a concatenated file, never "go read these five reference
+  files" left to the actor's discretion.
+
+If you are the agent running Helix and you notice yourself about to write
+findings without having made these Read/Bash calls as literal, visible tool
+uses in this turn — stop. You are about to reproduce F15. A finding that
+skipped `judging.md` is not gated; it is a guess wearing the finding format.
+
+### F16 — Waiting for the operator to flag false findings (no unconditional self-audit)
+
+**The loophole.** The orchestrator ships findings that look right but are wrong,
+and only re-reads the source and re-runs the gates *after* the operator points
+out the false positives. Correctness becomes the operator's job, not the agent's —
+the opposite of agent-centric operation. This compounds F15: even a report whose
+mechanics ran can carry false findings if nothing *disproves* them before shipping.
+
+**Failsafe.** **Self-audit before shipping is unconditional** (`SKILL.md` Turn 12):
+before any finding enters `verified.md`, actively attempt to DISPROVE it — re-read
+the cited `file:line`, re-send the request, re-open the observed page in a fresh
+tool call and confirm the evidence is real; then state the simplest alternative
+explanation and why it fails. Record a `self_audit:` line on every finding (the
+refutation attempted + the reason it survived). A finding whose evidence cannot be
+reproduced in a fresh call is **DEMOTED to a lead**. Never ship a finding that
+lacks a recorded refutation attempt — the operator flagging a false positive after
+the fact is a skill failure, not the workflow.
 
 ---
 
@@ -188,6 +269,8 @@ re-baseline rather than continue against stale state.
 [ ] deep vs --quick chosen against the token/rate budget                      (F3)
 [ ] memory + knowledge primed into the hit list (as leads, not findings)      (F8)
 [ ] .audit/ initialized for continuous state persistence                      (F4)
+[ ] shared-rules.md, judging.md, convergence.md, methodology.md actually
+    Read this turn (not assumed) — Turn 1 of SKILL.md's orchestration          (F15)
 ```
 
 ## Release checklist (before anything enters `verified.md` or a report)
@@ -203,6 +286,10 @@ re-baseline rather than continue against stale state.
 [ ] Coverage section names every gap and every untested surface               (F7)
 [ ] only gate-passed findings written to memory/patterns.jsonl                (F8)
 [ ] leads shipped as leads, with their next step; nothing left dangling       (F13)
+[ ] every bundle's line count was printed before its actor was spawned;
+    every finding actually passed through a Read of judging.md this run       (F15)
+[ ] every verified finding carries a recorded self_audit: line (the refutation
+    attempted + why it survived); none reproduced-and-failed-to-confirm        (F16)
 ```
 
 If a box can't be ticked, the report says so. Helix would rather ship an honest

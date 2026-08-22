@@ -68,6 +68,7 @@ PoC. Before hunting a protocol, load the classes that match its shape:
 | Vault / yield | donation-inflation, precision, share accounting, business-logic |
 | Governance | governance (flash-loan voting), access-control, upgrade |
 | Token | defl-tax-token (fee-on-transfer), approval-abuse, self-balance |
+| ZK / privacy pool | nullifier-reuse (double-spend the same note), merkle-root-staleness (proof verified against a root that's no longer current, or an unbounded root history that never expires), proof-malleability (a valid proof rewritten to a different valid proof for a different effect), under-constrained-circuit (a public input the circuit never actually constrains), verifying-key-mismatch (wrong/stale VK deployed vs the circuit that was audited) |
 
 The largest historical loss categories are where to spend the most time:
 **business-logic**, **flash-loan**, **oracle manipulation**, **access-control**,

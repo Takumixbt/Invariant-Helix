@@ -46,6 +46,16 @@ Merging **raises** confidence (independent actors converged); it never loses
 evidence. If two "duplicates" actually describe *different* mechanisms at the same
 location, they are **not** duplicates — split them back out (Gate 2).
 
+**HARD — never merge across different `location:` values.** Same bug_class,
+same-sounding description, different function/endpoint = different bugs. This
+holds even when one clearly caused the other (write to `chain_with:`, not a
+merge). The wide-description pass groups by *plain-words root cause*, not by
+*bug_class label* — two actors can tag the same location with different class
+names and still be one finding; two actors can share a class name at different
+locations and still be two findings. When in doubt, keep them separate — Gate 5
+promotes real corroboration back together via `lens:` counting, so splitting
+costs nothing; merging across locations silently drops a finding for good.
+
 ## Gate 2 — Function isolation
 
 Each finding describes **exactly one** bug. A raw finding that bundles "and also
@@ -62,6 +72,25 @@ operator/client can choose. A fix that would break legitimate functionality is
 noted as such. Never drop a finding because "the fix is unclear" — a real bug with
 an unclear fix is still a real bug; say the fix is non-trivial and why.
 
+**Distinctness check (HARD GATE, before writing the final `fix:`).** Collect every
+raw `fix:` any actor proposed for this (target, location). Two fixes are
+distinct if they differ in the called function/expression, the check direction
+(validate/restrict/ban), or the parameter checked — not if they're the same fix
+worded differently.
+
+- **1 fix (or all restatements of one idea)** → write it as the single `fix:`.
+- **≥2 distinct fixes** → print both, verbatim from the raw actor output, no
+  paraphrase:
+
+  ```
+  **Fix (Option A — <one-word label>)**: <verbatim diff/snippet from actor N1>
+  **Fix (Option B — <one-word label>)**: <verbatim diff/snippet from actor N2>
+  ```
+
+  Silently picking one and discarding the other is the failure mode this gate
+  exists to catch — a merged finding with 2+ distinct raw fixes and only 1
+  printed is a violation, fix it before the report ships.
+
 ## Gate 4 — Completeness
 
 Before promotion, confirm **every in-scope surface is accounted for** — either a
@@ -71,6 +100,22 @@ never a silent gap. The x-ray entry-point list (web3) and the recon surface map
 (web) are the checklists: every entry point / every endpoint is either hunted or
 flagged as unhunted. This is what separates "we audited it" from "we ran some
 agents."
+
+**HARD GATE — this must be a counted number, not a claim.** Before the report
+prints, list every unique (target, location) tuple that appears in *any* raw
+actor output (findings or leads), count it, then count how many survive into
+the final merged set (as a finding, a lead, or an explicit coverage-debt line).
+Print both numbers inline, before the report body:
+
+```
+Completeness: N unique (target, location) in raw → N covered in final.
+```
+
+If the two numbers don't match, something was silently dropped in Gate 1's
+merge — go back and find it. This is the same discipline pashov's
+solidity-auditor enforces mechanically; Helix has no script to force it, so the
+orchestrator prints the count itself as a literal line, not a summary sentence
+like "coverage looks complete."
 
 ## Gate 5 — Lead promotion
 

@@ -99,6 +99,19 @@ the strength of proof; nothing else is a prerequisite for hunting.
 State lives in `.audit/`, not in your context window. Write as you go so a reset
 loses nothing and `--continue` resumes cleanly.
 
+**This 11-step list is the shape, not the execution.** `SKILL.md`'s
+"Orchestration — do this, in order" section turns it into 12 literal numbered
+turns with exact Read/Bash/Agent calls and printed receipts (a bundle's line
+count, a completeness count, a routing decision) at each step. Follow that
+section, not just this outline — a fluent summary of these 11 steps without the
+underlying tool calls is `references/failure-modes.md` F15, an observed failure
+where findings shipped without ever actually passing through `judging.md` or
+`shared-rules.md`'s anti-hallucination protocol, because those files were named
+here but never opened. If your runtime can't make literal tool calls the way
+Claude Code does, adapt the *receipts* (a printed line, a written file) to
+whatever your harness can produce — the point is a checkable artifact per step,
+not the specific tool.
+
 ---
 
 ## Non-negotiables (an agent must honor these)

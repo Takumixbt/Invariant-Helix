@@ -296,6 +296,120 @@ on evidence. It never skips a rung because it "looks right." See
 
 ---
 
+## Orchestration — do this, in order (mechanical, not descriptive)
+
+The lifecycle above is the *shape*. This section is the *literal execution*.
+**A summary of these phases is not the same as running them** —
+`references/failure-modes.md` F15 is exactly this failure, observed: an
+orchestrator that narrates "I did intake, I hunted, I gated" without the
+underlying Read/Bash/Agent calls ever happening, shipping findings that were
+never actually run through the anti-hallucination protocol or the four gates
+because those files were referenced, not read. Every turn below produces a
+printed artifact for exactly this reason — if you can't show the receipt, it
+didn't happen.
+
+**Turn 1 — Read the core discipline, in parallel, before anything else.** Five
+Read calls in one message: `references/shared-rules.md` (finding format +
+anti-hallucination protocol — nothing downstream is valid without this),
+`references/judging.md` (the four gates — you cannot gate what you haven't
+read this to do), `references/convergence.md` (dedup pipeline + the two hard
+printed-count gates), `references/methodology.md` (the alternating loop
+mechanics), `references/failure-modes.md` (read it once; you are the agent it
+is warning). Skimming these five in the course of reading `SKILL.md` is not
+the same as this turn — this turn is these five files, read in full, as
+distinct tool calls, before Turn 2.
+
+**Turn 2 — Intake.** Follow `references/scope-intake.md`. Write `.audit/case.md`.
+Print the routing decision — target, resolved assets, strand(s), active-testing
+permission — before proceeding. The printed line is the receipt that intake
+ran; "scope looks like X" in your head is not.
+
+**Turn 3 — Preflight.** Run every line of `failure-modes.md`'s preflight
+checklist as literal checks and print a `[x]`/`[ ]` per line with what you
+found (fanout available? shell? web-fetch? tool roster from
+`local-tooling.md`'s capability sweep). An unprinted checklist is an unrun one.
+
+**Turn 4 — Prime.** Read `memory/*.jsonl` (`learning-loop.md`) and the matching
+sections of `knowledge.md` for this target's stack. Build the attacker's hit
+list. This is bundle content for Turn 5, not background reading you can skip
+under time pressure — an actor without a primed hit list re-derives from zero.
+
+**Turn 5 — Build every actor bundle, mechanically, before dispatching anyone.**
+For each actor the strand(s) call for (`agents/README.md`'s roster,
+`strands/*.md`'s Phase-2 tables), concatenate one file — Bash `cat` or, on
+Windows, PowerShell `Get-Content path1,path2,... | Set-Content bundle.md`:
+
+```
+{bundle_dir}/<actor>-bundle.md =
+  .audit/case.md
+  + the in-scope source / surface map
+  + references/methodology.md
+  + references/shared-rules.md
+  + agents/<actor>.md
+  + the Turn-4 hit list, filtered to this actor's classes
+```
+
+**Print the line count of every bundle before dispatch.** A bundle whose line
+count you cannot state was not built — it's a plan, not an artifact. This one
+line is the single check that most directly prevents F15.
+
+**Turn 6 — Spawn every actor as a parallel background Agent call, in one
+message.** Each prompt is exactly: *"Read {bundle_dir}/<actor>-bundle.md
+(NNNN lines) in full before hunting. It contains your scope, your lens, the
+finding format, and the anti-hallucination protocol — do not re-derive any of
+it. Emit findings in the shared-rules.md format at SUSPECT or REACHABLE only.
+You do not gate, dedup, or verify."* Never dispatch with "go read
+`agents/<actor>.md` and hunt" — that phrasing is how F15 happens; it leaves the
+rest of the bundle to the actor's discretion instead of one guaranteed Read.
+Wait for every actor's completion notification; do not poll, do not proceed
+early.
+
+**Turn 7 — Roll call (`failure-modes.md` F3).** Confirm every actor spawned in
+Turn 6 returned a raw-findings file, or is explicitly named as coverage-debt.
+A vanished actor is a named gap in the report, never a silent absence.
+
+**Turn 8 — The deep-logic loop**, when the web3 strand ran or web backend
+source is in scope for strand A: dispatch `skills/feynman-auditor` then
+`skills/state-inconsistency-auditor` per `methodology.md` Part 2 and
+`strands/web3-audit.md` Phase 1 — full pass 1, full pass 2, targeted
+alternation to convergence (max 6). This is sequential, not folded into Turn
+6's parallel dispatch — each pass reads the prior pass's actual output file.
+
+**Turn 9 — Converge.** Run `convergence.md`'s six gates in order over every raw
+file from Turns 6 and 8. Print the Gate 4 line —
+`Completeness: N in raw → N in final` — before proceeding; it is now a hard
+requirement of that file, not a suggestion.
+
+**Turn 10 — Crossover**, only if both strands produced output
+(`failure-modes.md` F10). Load `.audit/findings/web-raw.md`,
+`.audit/findings/web3-raw.md`, `.audit/xray/system.md` per
+`strands/crossover.md`'s load step, and hunt the seven seams.
+
+**Turn 11 — Gate.** Run every converged finding through `judging.md`'s four
+gates in order, honoring §0: discoverer ≠ verifier — you, the orchestrator,
+run this turn, never the actor that raised the finding.
+
+**Turn 12 — Self-audit before shipping (agent-centric; unconditional, never waits to be flagged).**
+Before any finding enters `verified.md`, actively try to DISPROVE it (`failure-modes.md` F16).
+For each finding: re-read the cited `file:line` / re-send the request / re-open the
+observed page in a fresh tool call and confirm the evidence is real; then state the
+simplest alternative explanation and why it fails. Record a `self_audit:` line on
+every finding — the refutation attempted + the reason it survived. If the evidence
+cannot be reproduced in a fresh call, the finding is **DEMOTED to a lead**. Zero
+findings ship without a recorded refutation attempt. This is the direct fix for F11
+(hallucinated evidence) and for the observed failure where findings only got
+corrected after the operator flagged them — correctness is the agent's job, not the
+operator's.
+
+**Turn 13 — Verify, report, learn.** Confirm C/H/M with PoC or trace
+(`property-fuzzing.md` where applicable). Write `verified.md`. Emit the report
+in the operator's named format (`report-formatting.md`). Run the release
+checklist (`failure-modes.md`) as literal printed checks, same discipline as
+Turn 3. Append confirmed patterns and killed hypotheses to `memory/*.jsonl`
+(`learning-loop.md`).
+
+---
+
 ## References
 
 The orchestrator is thin on purpose. The depth lives here — read the reference
@@ -308,6 +422,7 @@ for the phase you are in.
 - `references/convergence.md` — the dedup/promotion pipeline that keeps a deep swarm producing signal (mandatory when deep).
 - `references/failure-modes.md` — the skill's self-audit: its own failure modes + failsafes, and the preflight/release checklists (read before every run).
 - `references/scope-intake.md` — turn a dropped link into a scope card.
+- `references/dispatch.md` — **read immediately after intake, every run.** Turns the scope card into an exact run plan (`.audit/plan.md`): classifies the target from its real tree, picks the VM gate + actor roster + matrix axes, pins the deployed artifact against source, and writes the program's kill-list *before* hunting starts. Nothing runs that the scope does not authorise; nothing ships that the scope excludes.
 - `references/knowledge.md` — the disclosed-report method + real-incident grounding.
 - `references/learning-loop.md` — how Helix remembers across engagements (Hermes-tuned).
 - `references/model-profiles.md` — the orchestrator/actor role→model mapping per harness.
@@ -316,10 +431,14 @@ for the phase you are in.
 - `references/strands/web-recon.md` — STRAND A: web/API recon-to-exploit + its actor roster.
 - `references/strands/web3-audit.md` — STRAND B: smart-contract/Web3 full audit + its actor roster.
 - `references/strands/crossover.md` — THE INTERTWINE: the web2↔web3 seam (strong-tier synthesis).
+- `references/solana-scan.md` — Rust/Anchor targets: six grep-verifiable static checks run before any actor opens a file (Solana's equivalent of x-ray's Solidity entry-point gate).
+- `references/vm-gates.md` — the same mechanical entry gate for **every other VM**: EVM/Vyper, Move (Aptos/Sui), CosmWasm, Cairo/Starknet, **and §BACKEND** (route+guard+sink scan for Python/Node/Go/Rails/Spring/PHP source reviews — the case pashov's Solidity-only skills cannot touch). Pashov's `x-ray`/`solidity-auditor` cover Solidity well and should be used when installed; this file covers everything else.
+- `references/web-gates.md` — the binding matrix for HTTP surfaces: enumerate `(endpoint × method × auth-state × object)` and read the empty cells, the same forcing function `binding-matrix.md` gives contracts. Makes Strand A enumerate instead of only hunt.
+- `references/binding-matrix.md` — the six-axis enumeration grid (who authenticated each value; do asset branches agree). The forcing function `convergence.md` says Helix lacks: hunters find depth, this finds what nobody looked at. Read it whenever coverage matters more than cleverness.
 
 **The actors (dispatched in parallel by the orchestrator — see `agents/README.md`):**
 - Web: `recon` · `access-control` · `injection` · `client-side` · `business-logic` (core) + `graphql` · `supply-chain` (deep).
-- Web3: `economic` · `math` · `access-upgrade` · `integration` (core) + `invariant` · `execution-trace` · `periphery` · `gap-hunter` (deep; gap-hunter ×3 modes).
+- Web3: `economic` · `math` · `access-upgrade` · `integration` (core) + `invariant` · `execution-trace` · `periphery` · `gap-hunter` · `binding-matrix` (deep; gap-hunter ×3 modes; binding-matrix is the coverage actor — run alongside the hunters, never instead).
 - `skills/feynman-auditor/SKILL.md` · `skills/state-inconsistency-auditor/SKILL.md` — the two deep-logic engines, run on contracts and web backend logic (also standalone via `/feynman`, `/state-audit`).
 - `references/property-fuzzing.md` — Echidna/Medusa/Foundry invariant proofs (the `invariant-agent`'s heavy-verification path).
 
@@ -339,6 +458,7 @@ for the phase you are in.
 /helix --quick <link>             # fast pass: core (★) actors only, skip the deep roster
 /helix --web <link>               # strand A only (web/API)
 /helix --web3 <link>              # strand B only (smart contract / Web3)
+/helix --matrix <link>            # coverage pass only: binding matrix, no hunting
 /helix --crossover                # crossover pass over existing strand output
 /helix --report <platform>        # re-emit findings for a named platform
 /helix --continue                 # resume an interrupted engagement from .audit/
